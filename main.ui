@@ -69,7 +69,7 @@
        <property name="frameShadow">
         <enum>QFrame::Raised</enum>
        </property>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>10</x>
@@ -80,14 +80,14 @@
         </property>
         <layout class="QFormLayout" name="formLayout">
          <item row="0" column="0">
-          <widget class="QLabel" name="label">
+          <widget class="QLabel" name="bandit_label">
            <property name="text">
             <string>Bandits:</string>
            </property>
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QComboBox" name="comboBox">
+          <widget class="QComboBox" name="bandit_comboBox">
            <property name="minimumSize">
             <size>
              <width>100</width>
@@ -112,6 +112,12 @@
          <height>500</height>
         </size>
        </property>
+       <property name="focusPolicy">
+        <enum>Qt::ClickFocus</enum>
+       </property>
+       <property name="toolTipDuration">
+        <number>0</number>
+       </property>
        <property name="accessibleName">
         <string/>
        </property>
@@ -122,9 +128,33 @@
         <number>0</number>
        </property>
        <widget class="QWidget" name="tabTree">
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
         <attribute name="title">
          <string>&amp;Tree</string>
         </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::TabFocus</enum>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="pixmap">
+            <pixmap resource="main.qrc">:/TreeData/src/TreeData/AmberOil.png</pixmap>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </widget>
        <widget class="QWidget" name="tabSkills">
         <attribute name="title">
@@ -367,6 +397,8 @@
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="main.qrc"/>
+ </resources>
  <connections/>
 </ui>

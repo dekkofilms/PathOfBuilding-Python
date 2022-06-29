@@ -5,7 +5,7 @@ Sets up and connects internal UI components
 """
 import qdarktheme
 from qdarktheme.qtpy.QtCore import QSize, QDir, QRect, Qt, Slot, QCoreApplication
-from qdarktheme.qtpy.QtGui import QAction, QActionGroup, QFont, QIcon
+from qdarktheme.qtpy.QtGui import QAction, QActionGroup, QFont, QIcon, QPixmap
 from qdarktheme.qtpy.QtWidgets import (
     QApplication,
     QColorDialog,
@@ -43,7 +43,9 @@ from qdarktheme.widget_gallery.ui.frame_ui import FrameUI
 from qdarktheme.widget_gallery.ui.widgets_ui import WidgetsUI
 
 from pob_config import Config, color_codes
-from Build import Build
+from build import Build
+from enumerations import ColorCodes
+import main_rc
 
 
 class RightPane:
@@ -54,7 +56,21 @@ class RightPane:
 
         ############################################
         # Tree tab
-        self.tabTree = QWidget()
+        self.tabTree = QLabel()
+        self.tabTree.setObjectName(u"tabTree")
+        # need the layout to make the label follow window size changes
+        self.horizontalLayout_2 = QHBoxLayout(self.tabTree)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        sizePolicy2 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        sizePolicy2.setHorizontalStretch(0)
+        sizePolicy2.setVerticalStretch(0)
+        self.tabTree.setSizePolicy(sizePolicy2)
+        self.tabTree.setFocusPolicy(Qt.TabFocus)
+        self.tabTree.setPixmap(QPixmap(u":/TreeData/src/TreeData/ClassesRaider.png"))
+        # pixmap = QPixmap(u":/TreeData/src/TreeData/ClassesRaider.png")
+        # self.tabTree.setPixmap(pixmap.scaled(200, 200, Qt.KeepAspectRatio))
+
+
         win.addTab(
             self.tabTree, QCoreApplication.translate("MainWindow", "&Tree", None)
         )
@@ -100,7 +116,8 @@ class RightPane:
         self.colour_combo_box = QComboBox(self.nt_widget)
         self.colour_combo_box.setObjectName("colourComboBox")
         self.colour_combo_box.setMinimumSize(QSize(140, 0))
-        self.colour_combo_box.addItems(color_codes.keys())
+        # self.colour_combo_box.addItems(color_codes.keys())
+        self.colour_combo_box.addItems([colour.name for colour in ColorCodes])
         self.font_layout.addWidget(self.colour_combo_box)
         self.horizontal_spacer = QSpacerItem(
             88, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
@@ -127,7 +144,7 @@ class LeftPane:
         size_policy.setVerticalStretch(0)
         win.setSizePolicy(size_policy)
         win.setMinimumSize(QSize(180, 600))
-        win.setMaximumSize(QSize(400, 10000))
+        win.setMaximumSize(QSize(400, 16777215))
         win.setSizeIncrement(QSize(10, 0))
         win.setFrameShape(QFrame.StyledPanel)
         win.setFrameShadow(QFrame.Raised)
@@ -205,12 +222,6 @@ class PoB_UI:
         ]
         self.menu_builds.addActions(self.actions_recent_builds)
         self.set_recent_builds(config)
-        # Room for "recent" builds
-        # recents = config.recentBuilds()
-        # for value in recents.values():
-        #     print("value: %s" % value)
-        #     if value != "":
-        #         self.ui.menu_builds.addAction(value)
 
         # Theme Menu Actions
         self.actions_theme = [QAction(theme, main_win) for theme in ["dark", "light"]]

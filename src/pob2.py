@@ -34,7 +34,7 @@ from qdarktheme.widget_gallery.ui.widgets_ui import WidgetsUI
 
 from pob_ui import PoB_UI
 from pob_config import Config, color_codes
-from Build import Build
+from build import Build
 
 import ui_utils
 
@@ -42,18 +42,22 @@ import ui_utils
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super(MainWindow, self).__init__()
-        self.setMinimumSize(QSize(800, 600))
-        self.setWindowTitle("Path of Building")  # Do not translate
+        # Setup config
         self.config = Config()
         self.config.read_config()
-        self.resize(self.config.size())
+
         atexit.register(self.exit_handler)
+        self.setMinimumSize(QSize(800, 600))
+        self.setWindowTitle("Path of Building")  # Do not translate
+        self.resize(self.config.size())
         # enable again if you want icons,
         # QDir.addSearchPath("icons", f"{get_qdarktheme_root_path().as_posix()}/widget_gallery/svg")
+
         self._ui = PoB_UI(self, self.config)
         self._theme = "dark"
         self._border_radius = "rounded"
-        self.build = Build()
+
+        self.build = Build(self.config)
         self._ui.build = self.build
 
         # Connect actions

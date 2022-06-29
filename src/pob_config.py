@@ -9,7 +9,8 @@ import os
 
 from qdarktheme.qtpy.QtCore import QDir, QSize, Qt, Slot
 
-import pob_xml
+import pob_file
+import enumerations
 
 # Default config incase the settings file doesn't exist
 default_config = {
@@ -126,21 +127,24 @@ class Config:
     def __init__(self) -> None:
         self.config = {}
         self.exeDir = os.path.dirname(os.path.abspath(sys.argv[0]))
-        self.buildPath = os.path.join(self.exeDir, "builds")
         self.settingsFile = os.path.join(self.exeDir, "settings.xml")
+        self.buildPath = os.path.join(self.exeDir, "builds")
         if not os.path.exists(self.buildPath):
             os.makedirs(self.buildPath)
+        self.tree_data_path = os.path.join(self.exeDir, "TreeData")
+        if not os.path.exists(self.tree_data_path):
+            os.makedirs(self.tree_data_path)
 
     def read_config(self):
         if os.path.exists(self.settingsFile):
-            self.config = pob_xml.read_xml(self.settingsFile)
+            self.config = pob_file.read_xml(self.settingsFile)
             # print(self.config)
         if self.config is None:
             self.config = default_config
 
     def write_config(self):
         # print(self.config)
-        pob_xml.write_xml(self.settingsFile, self.config)
+        pob_file.write_xml(self.settingsFile, self.config)
 
     def theme(self):
         return self.config["PathOfBuilding"]["Misc"]["theme"]
