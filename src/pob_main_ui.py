@@ -17,9 +17,9 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QFormLayout, QFrame,
-    QHBoxLayout, QLabel, QMainWindow, QMenu,
-    QMenuBar, QSizePolicy, QSplitter, QStatusBar,
-    QTabWidget, QWidget)
+    QGraphicsView, QHBoxLayout, QLabel, QMainWindow,
+    QMenu, QMenuBar, QSizePolicy, QSplitter,
+    QStatusBar, QTabWidget, QWidget)
 import main_rc
 
 class Ui_MainWindow(object):
@@ -101,7 +101,7 @@ class Ui_MainWindow(object):
         self.frame.setFrameShadow(QFrame.Raised)
         self.layoutWidget = QWidget(self.frame)
         self.layoutWidget.setObjectName(u"layoutWidget")
-        self.layoutWidget.setGeometry(QRect(10, 10, 150, 24))
+        self.layoutWidget.setGeometry(QRect(10, 10, 170, 24))
         self.formLayout = QFormLayout(self.layoutWidget)
         self.formLayout.setObjectName(u"formLayout")
         self.formLayout.setContentsMargins(0, 0, 0, 0)
@@ -111,8 +111,13 @@ class Ui_MainWindow(object):
         self.formLayout.setWidget(0, QFormLayout.LabelRole, self.bandit_label)
 
         self.bandit_comboBox = QComboBox(self.layoutWidget)
+        self.bandit_comboBox.addItem("")
+        self.bandit_comboBox.addItem("")
         self.bandit_comboBox.setObjectName(u"bandit_comboBox")
-        self.bandit_comboBox.setMinimumSize(QSize(100, 0))
+        self.bandit_comboBox.setMinimumSize(QSize(120, 0))
+        self.bandit_comboBox.setSizeAdjustPolicy(QComboBox.AdjustToContentsOnFirstShow)
+        self.bandit_comboBox.setMinimumContentsLength(60)
+        self.bandit_comboBox.setModelColumn(0)
 
         self.formLayout.setWidget(0, QFormLayout.FieldRole, self.bandit_comboBox)
 
@@ -125,31 +130,17 @@ class Ui_MainWindow(object):
         sizePolicy1.setHeightForWidth(self.tabWidget.sizePolicy().hasHeightForWidth())
         self.tabWidget.setSizePolicy(sizePolicy1)
         self.tabWidget.setMinimumSize(QSize(600, 500))
-        self.tabWidget.setFocusPolicy(Qt.ClickFocus)
-        self.tabWidget.setToolTipDuration(0)
         self.tabWidget.setStyleSheet(u"")
-
-#        self.tabTree = QWidget()
-        self.tabTree = QLabel()
+        self.tabTree = QWidget()
         self.tabTree.setObjectName(u"tabTree")
-        self.tabTree.setAutoFillBackground(True)
         self.horizontalLayout_2 = QHBoxLayout(self.tabTree)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-#        self.label_2 = QLabel(self.tabTree)
-#        self.label_2.setObjectName(u"label_2")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-#        sizePolicy2.setHeightForWidth(self.label_2.sizePolicy().hasHeightForWidth())
-        self.tabTree.setSizePolicy(sizePolicy2)
-        self.tabTree.setFocusPolicy(Qt.TabFocus)
-        self.tabTree.setPixmap(QPixmap(u":/TreeData/src/TreeData/AmberOil.png"))
-#       self.label_2.setSizePolicy(sizePolicy2)
-#        self.label_2.setFocusPolicy(Qt.TabFocus)
-#        self.label_2.setPixmap(QPixmap(u":/TreeData/src/TreeData/AmberOil.png"))
-#        self.horizontalLayout_2.addWidget(self.label_2)
-        self.tabWidget.addTab(self.tabTree, "")
+        self.graphicsView = QGraphicsView(self.tabTree)
+        self.graphicsView.setObjectName(u"graphicsView")
 
+        self.horizontalLayout_2.addWidget(self.graphicsView)
+
+        self.tabWidget.addTab(self.tabTree, "")
         self.tabSkills = QWidget()
         self.tabSkills.setObjectName(u"tabSkills")
         self.tabWidget.addTab(self.tabSkills, "")
@@ -279,10 +270,13 @@ class Ui_MainWindow(object):
         self.actionDarcula.setWhatsThis(QCoreApplication.translate("MainWindow", u"Windows", None))
 #endif // QT_CONFIG(whatsthis)
         self.bandit_label.setText(QCoreApplication.translate("MainWindow", u"Bandits:", None))
+        self.bandit_comboBox.setItemText(0, QCoreApplication.translate("MainWindow", u"2 Passives Points", None))
+        self.bandit_comboBox.setItemText(1, QCoreApplication.translate("MainWindow", u"Oak (Life Regen, Phys.Dmg. Reduction, Phys.Dmg)", None))
+
+        self.bandit_comboBox.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Make  a Selection", None))
 #if QT_CONFIG(accessibility)
         self.tabWidget.setAccessibleName("")
 #endif // QT_CONFIG(accessibility)
-#        self.label_2.setText("")
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabTree), QCoreApplication.translate("MainWindow", u"&Tree", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabSkills), QCoreApplication.translate("MainWindow", u"&Skills", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tabItems), QCoreApplication.translate("MainWindow", u"&Items", None))

@@ -4,8 +4,8 @@ Path of Building UI class
 Sets up and connects internal UI components
 """
 import qdarktheme
-from qdarktheme.qtpy.QtCore import QSize, QDir, QRect, Qt, Slot, QCoreApplication
-from qdarktheme.qtpy.QtGui import QAction, QActionGroup, QFont, QIcon, QPixmap
+from qdarktheme.qtpy.QtCore import QSize, QDir, QRect, QRectF, Qt, Slot, QCoreApplication
+from qdarktheme.qtpy.QtGui import QAction, QActionGroup, QFont, QIcon, QPixmap, QBrush, QColor, QPainter
 from qdarktheme.qtpy.QtWidgets import (
     QApplication,
     QColorDialog,
@@ -16,6 +16,9 @@ from qdarktheme.qtpy.QtWidgets import (
     QFontDialog,
     QFormLayout,
     QFrame,
+    QGraphicsPixmapItem,
+    QGraphicsScene,
+    QGraphicsView,
     QGroupBox,
     QHBoxLayout,
     QLabel,
@@ -48,6 +51,80 @@ from enumerations import ColorCodes
 import main_rc
 
 
+class TreeView(QGraphicsView):
+    def __init__(self, parent):
+        super(TreeView, self).__init__()
+        self._zoom = 0
+        self._empty = True
+        self._scene = QGraphicsScene(self)
+        self._photo = QGraphicsPixmapItem()
+        self._scene.addItem(self._photo)
+        self.setScene(self._scene)
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setFrameShape(QFrame.NoFrame)
+        self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
+
+    def hasPhoto(self):
+        return not self._empty
+
+    def fitInView(self, scale=True, factor = None):
+        rect = QRectF(self._photo.pixmap().rect())
+        if not rect.isNull():
+            self.setSceneRect(rect)
+            if self.hasPhoto():
+                unity = self.transform().mapRect(QRectF(0, 0, 1, 1))
+                if factor is None:
+                    self.scale(1 / unity.width(), 1 / unity.height())
+                else:
+                    self.scale(factor, factor)
+                # viewrect = self.viewport().rect()
+                # scenerect = self.transform().mapRect(rect)
+                # factor = min(viewrect.width() / scenerect.width(),
+                             # viewrect.height() / scenerect.height())
+            self._zoom = 0
+
+    def setPhoto(self, pixmap=None):
+        self._zoom = 0
+        if pixmap and not pixmap.isNull():
+            self._empty = False
+            # self.setDragMode(QGraphicsView.ScrollHandDrag)
+            self._photo.setPixmap(pixmap)
+        else:
+            self._empty = True
+            self.setDragMode(QGraphicsView.NoDrag)
+            self._photo.setPixmap(QPixmap())
+        self.fitInView()
+
+    def wheelEvent(self, event):
+        if self.hasPhoto():
+            if event.angleDelta().y() > 0:
+                factor = 1.25
+                self._zoom += 1
+            else:
+                factor = 0.8
+                self._zoom -= 1
+            if self._zoom == 0:
+                self.fitInView()
+            else:
+                self.scale(factor, factor)
+            t = self.transform()
+            print(t.m11())
+            print(t.m22())
+
+    # def toggleDragMode(self):
+    #     if self.dragMode() == QGraphicsView.ScrollHandDrag:
+    #         self.setDragMode(QGraphicsView.NoDrag)
+    #     elif not self._photo.pixmap().isNull():
+    #         self.setDragMode(QGraphicsView.ScrollHandDrag)
+    #
+    # def mousePressEvent(self, event):
+    #     if self._photo.isUnderMouse():
+    #         self.photoClicked.emit(self.mapToScene(event.pos()).toPoint())
+    #     super(TreeView, self).mousePressEvent(event)
+
 class RightPane:
     """The ui class of dock window."""
     def __init__(self, win: QTabWidget) -> None:
@@ -56,8 +133,11 @@ class RightPane:
 
         ############################################
         # Tree tab
-        self.tabTree = QLabel()
-        self.tabTree.setObjectName(u"tabTree")
+        # self.tabTree = QLabel()
+        # self.tabTree.setObjectName(u"tabTree")
+        # self.tabTree.setObjectName(u"tabTree")
+        self.tabTree = TreeView(self)
+
         # need the layout to make the label follow window size changes
         self.horizontalLayout_2 = QHBoxLayout(self.tabTree)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
@@ -66,9 +146,14 @@ class RightPane:
         sizePolicy2.setVerticalStretch(0)
         self.tabTree.setSizePolicy(sizePolicy2)
         self.tabTree.setFocusPolicy(Qt.TabFocus)
-        self.tabTree.setPixmap(QPixmap(u":/TreeData/src/TreeData/ClassesRaider.png"))
+        # self.tabTree.setPixmap(QPixmap(u":/TreeData/src/TreeData/ClassesRaider.png"))
+        # self.tabTree.setPixmap(QPixmap(u"c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png"))
         # pixmap = QPixmap(u":/TreeData/src/TreeData/ClassesRaider.png")
         # self.tabTree.setPixmap(pixmap.scaled(200, 200, Qt.KeepAspectRatio))
+        # self.viewer.setPhoto(QPixmap(u"c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png"))
+        self.tabTree.setPhoto(QPixmap(u"c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png"))
+        # self.tabTree._photo.setPixmap(QPixmap(u"c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png"))
+        self.tabTree.fitInView(False, 0.5)
 
 
         win.addTab(
@@ -156,17 +241,46 @@ class LeftPane:
         self.formLayout.setWidget(0, QFormLayout.LabelRole, bandit_label)
 
         self.bandit_comboBox = QComboBox(win)
-        self.bandit_comboBox.addItem("Item1")
-        self.bandit_comboBox.addItem("Item2")
+        self.bandit_comboBox.addItem("2 Passive Points", "None")
+        self.bandit_comboBox.addItem("Oak (Life Regen, Phys.Dmg. Reduction, Phys.Dmg)", "Oak")
+        self.bandit_comboBox.addItem("Kraityn (Attack/Cast Speed, Avoid Elemental Ailments, Move Speed)", "Kraityn")
+        self.bandit_comboBox.addItem("Alira (Mana Regen, Crit Multiplier, Resists)", "Alira")
+        self.bandit_comboBox.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Make  a Selection", None))
+        # set the ComboBox dropdown width.
+        self.bandit_comboBox.view().setMinimumWidth(self.bandit_comboBox.minimumSizeHint().width())
         self.formLayout.setWidget(0, QFormLayout.FieldRole, self.bandit_comboBox)
 
         major_god_label = QLabel(win)
         self.formLayout.setWidget(1, QFormLayout.LabelRole, major_god_label)
         major_god_label.setText(QCoreApplication.translate("MainWindow", u"Major Gods:", None))
         self.major_god_comboBox = QComboBox(win)
-        self.major_god_comboBox.addItem("God1")
-        self.major_god_comboBox.addItem("God2")
+        self.major_god_comboBox.addItem("Nothing", "None")
+        self.major_god_comboBox.addItem("Soul of the Brine King", "TheBrineKing")
+        self.major_god_comboBox.addItem("Soul of Lunaris", "Lunaris")
+        self.major_god_comboBox.addItem("Soul of Solaris", "Solaris")
+        self.major_god_comboBox.addItem("Soul of Arakaali", "Arakaali")
+        self.major_god_comboBox.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Make  a Selection", None))
+        # set the ComboBox dropdown width.
+        self.major_god_comboBox.view().setMinimumWidth(self.major_god_comboBox.minimumSizeHint().width())
         self.formLayout.setWidget(1, QFormLayout.FieldRole, self.major_god_comboBox)
+
+        minor_god_label = QLabel(win)
+        self.formLayout.setWidget(2, QFormLayout.LabelRole, minor_god_label)
+        minor_god_label.setText(QCoreApplication.translate("MainWindow", u"minor Gods:", None))
+        self.minor_god_comboBox = QComboBox(win)
+        self.minor_god_comboBox.addItem("Nothing", "None")
+        self.minor_god_comboBox.addItem("Soul of Gruthkul", "Gruthkul")
+        self.minor_god_comboBox.addItem("Soul of Yugul", "Yugul")
+        self.minor_god_comboBox.addItem("Soul of Abberath", "Abberath")
+        self.minor_god_comboBox.addItem("Soul of Tukohama", "Tukohama")
+        self.minor_god_comboBox.addItem("Soul of Garukhan", "Garukhan")
+        self.minor_god_comboBox.addItem("Soul of Ralakesh", "Ralakesh")
+        self.minor_god_comboBox.addItem("Soul of Ryslatha", "Ryslatha")
+        self.minor_god_comboBox.addItem("Soul of Shakari", "Shakari")
+        self.minor_god_comboBox.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Make  a Selection", None))
+        # set the ComboBox dropdown width.
+        self.minor_god_comboBox.view().setMinimumWidth(self.minor_god_comboBox.minimumSizeHint().width())
+        self.formLayout.setWidget(2, QFormLayout.FieldRole, self.minor_god_comboBox)
 
         # LeftPane
 
