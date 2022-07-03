@@ -130,7 +130,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.tab_focus = None
         self.notes_text_edit = None
         self.setupUi(self)
-        self.config = Config()
+        self.config = Config(app, self)
         self.config.read_config()
         atexit.register(self.exit_handler)
 

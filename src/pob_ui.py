@@ -3,7 +3,6 @@ Path of Building UI class
 
 Sets up and connects internal UI components
 """
-import qdarktheme
 from qdarktheme.qtpy.QtCore import QSize, QDir, QRect, QRectF, Qt, Slot, QCoreApplication
 from qdarktheme.qtpy.QtGui import QAction, QActionGroup, QFont, QIcon, QPixmap, QBrush, QColor, QPainter
 from qdarktheme.qtpy.QtWidgets import (
@@ -32,6 +31,7 @@ from qdarktheme.qtpy.QtWidgets import (
     QSplitter,
     QStackedWidget,
     QStatusBar,
+    QStyle,
     QTabWidget,
     QTextEdit,
     QToolBar,
@@ -48,7 +48,14 @@ from qdarktheme.widget_gallery.ui.widgets_ui import WidgetsUI
 from pob_config import Config, color_codes
 from build import Build
 from enumerations import ColorCodes
+from tree import Tree
 import main_rc
+
+
+"""
+TreeView
+    Class for displaying and manipulating the Passive tree  
+"""
 
 
 class TreeView(QGraphicsView):
@@ -80,10 +87,6 @@ class TreeView(QGraphicsView):
                     self.scale(1 / unity.width(), 1 / unity.height())
                 else:
                     self.scale(factor, factor)
-                # viewrect = self.viewport().rect()
-                # scenerect = self.transform().mapRect(rect)
-                # factor = min(viewrect.width() / scenerect.width(),
-                             # viewrect.height() / scenerect.height())
             self._zoom = 0
 
     def setPhoto(self, pixmap=None):
@@ -125,35 +128,35 @@ class TreeView(QGraphicsView):
     #         self.photoClicked.emit(self.mapToScene(event.pos()).toPoint())
     #     super(TreeView, self).mousePressEvent(event)
 
+
+"""
+RightPane
+Class for holding components to display the right side of the vertical splitter 
+"""
+
+
 class RightPane:
     """The ui class of dock window."""
-    def __init__(self, win: QTabWidget) -> None:
+    def __init__(self, win: QTabWidget, config: Config) -> None:
         super().__init__()
         """Set up ui."""
 
         ############################################
         # Tree tab
-        # self.tabTree = QLabel()
-        # self.tabTree.setObjectName(u"tabTree")
-        # self.tabTree.setObjectName(u"tabTree")
         self.tabTree = TreeView(self)
 
         # need the layout to make the label follow window size changes
         self.horizontalLayout_2 = QHBoxLayout(self.tabTree)
         self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        sizePolicy2 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        sizePolicy2.setHorizontalStretch(0)
-        sizePolicy2.setVerticalStretch(0)
-        self.tabTree.setSizePolicy(sizePolicy2)
+        size_policy2 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        size_policy2.setHorizontalStretch(0)
+        size_policy2.setVerticalStretch(0)
+        self.tabTree.setSizePolicy(size_policy2)
         self.tabTree.setFocusPolicy(Qt.TabFocus)
-        # self.tabTree.setPixmap(QPixmap(u":/TreeData/src/TreeData/ClassesRaider.png"))
-        # self.tabTree.setPixmap(QPixmap(u"c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png"))
-        # pixmap = QPixmap(u":/TreeData/src/TreeData/ClassesRaider.png")
-        # self.tabTree.setPixmap(pixmap.scaled(200, 200, Qt.KeepAspectRatio))
-        # self.viewer.setPhoto(QPixmap(u"c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png"))
-        self.tabTree.setPhoto(QPixmap(u"c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png"))
-        # self.tabTree._photo.setPixmap(QPixmap(u"c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png"))
+        self.tabTree._photo.setPixmap(QPixmap(u"c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png"))
+        # self.tabTree._photo.setPixmap(QPixmap(u":/Art/TreeData/ClassesRaider.png"))
         self.tabTree.fitInView(False, 0.5)
+        self.tabTree.tree = Tree(config)
 
 
         win.addTab(
@@ -218,12 +221,16 @@ class RightPane:
         # RightPane
 
 
+"""
+LeftPane
+Class for holding components to display the left side of the vertical splitter 
+"""
+
+
 class LeftPane:
-    def __init__(self, win: QFrame) -> None:
+    def __init__(self, win: QFrame, config: Config) -> None:
         super().__init__()
         """Set up ui."""
-    # def __init__(self) -> None:
-    # def setup_ui(self, win: QWidget) -> None:
         size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         size_policy.setHorizontalStretch(1)
         size_policy.setVerticalStretch(0)
@@ -285,18 +292,18 @@ class LeftPane:
         # LeftPane
 
 
-class PoB_UI:
+class PoBUI:
     def __init__(self, main_win: QMainWindow, config: Config) -> None:
         super().__init__()
         """Set up ui."""
         self.build = None
+        self.config = config
 
         # ######################  STATUS BAR  ######################
-        statusbar = QStatusBar()
-        main_win.setStatusBar(statusbar)
+        statusbar = QStatusBar(main_win)
 
         # ######################  MENU BAR  ######################
-        menubar = QMenuBar()
+        menubar = QMenuBar(main_win)
         # Remove the space that the icon reserves. If you want check boxes or icons, then delete this section
         menubar.setStyleSheet(
             "QMenu::item {"
@@ -307,16 +314,23 @@ class PoB_UI:
             "color: rgb(255, 255, 255);"
             "}"
         )
+        self.toolBar = QToolBar(main_win)
+        self.toolBar.setToolButtonStyle(Qt.ToolButtonIconOnly)
+        self.toolBar.setAllowedAreas(Qt.BottomToolBarArea|Qt.TopToolBarArea)
+        self.toolBar.setIconSize(QSize(30, 30))
+        self.toolBar.setFloatable(False)
 
         # Builds Menu
-        self.action_new = QAction("Ne&w")
+        # icons: https://icons8.com/icon/set/folders/office
+        self.action_new = QAction(QIcon(u":/Art/file_new"), "Ne&w")
         self.action_new.setShortcut("Ctrl+N")
-        self.action_open = QAction("&Open ...")
+        self.action_open = QAction(QIcon(":/Art/file_open"), "&Open ...")
         self.action_open.setShortcut("Ctrl+O")
-        self.action_save = QAction("Sa&ve")
+        self.action_save = QAction(QIcon(":/Art/file_save"), "Sa&ve")
         self.action_save.setShortcut("Ctrl+S")
         self.action_exit = QAction("E&xit")
         self.action_exit.setShortcut("Ctrl+X")
+
         self.menu_builds = menubar.addMenu("&Builds")
         self.menu_builds.addActions(
             (self.action_new, self.action_open, self.action_save)
@@ -336,20 +350,43 @@ class PoB_UI:
         ]
         self.menu_builds.addActions(self.actions_recent_builds)
         self.set_recent_builds(config)
+        # Room for "recent" builds
+        # recents = config.recentBuilds()
+        # for value in recents.values():
+        #     print("value: %s" % value)
+        #     if value != "":
+        #         self.ui.menu_builds.addAction(value)
 
-        # Theme Menu Actions
-        self.actions_theme = [QAction(theme, main_win) for theme in ["dark", "light"]]
-        menu_theme = menubar.addMenu("&Theme")
-        menu_theme.addActions(self.actions_theme)
-        menu_theme.addSeparator()
-        # Tech Demo. Switch just one entry
-        self.actions_theme_dark_light = QAction(
-            "Light"
-        )  # opposite of the default theme
+        # Add things to the toolbar
+        self.toolBar.addAction(self.action_new)
+        self.toolBar.addAction(self.action_open)
+        self.toolBar.addAction(self.action_save)
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
+        spacer.setMinimumSize(100,0)
+        self.toolBar.addWidget(spacer)
+        self.points_label = QLabel()
+        self.points_label.setMinimumSize(100,0)
+        self.points_label.setText(" 0 / 123  0 / 8 ")
+        self.points_label.setAlignment(Qt.AlignCenter)
+        self.toolBar.addWidget(self.points_label)
+        label = QLabel()
+        label.setText("Level: ")
+        self.toolBar.addWidget(label)
+        self.level_spinbox = QSpinBox()
+        self.level_spinbox.setMinimum(1)
+        self.level_spinbox.setMaximum(100)
+        self.toolBar.addWidget(self.level_spinbox)
+
+        # Options Menu Actions
+        menu_options = menubar.addMenu("&Options")
+        # --- insert others before theme ---
+
+        menu_options.addSeparator()
+        # opposite of the default theme, should always show the action you are about to do
+        self.actions_theme_dark_light = QAction("Light")
         self.actions_theme_dark_light.setShortcut("Ctrl+0")
-        menu_theme.addAction(self.actions_theme_dark_light)
-
-        main_win.setMenuBar(menubar)
+        menu_options.addAction(self.actions_theme_dark_light)
 
         # Main Window
         self.central_window = QMainWindow()
@@ -360,7 +397,7 @@ class PoB_UI:
         # Layout
         container = QWidget()
         self.frame = QFrame(h_splitter_1)
-        self.left_pane = LeftPane(self.frame)
+        self.left_pane = LeftPane(self.frame, config)
         # container.setObjectName("Build Info")
         # self.left_pane = LeftPane(container)
         size_policy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
@@ -380,7 +417,7 @@ class PoB_UI:
         # h_splitter_1.addWidget(container)
 
         self.tabs = QTabWidget()
-        self.right_pane = RightPane(self.tabs)
+        self.right_pane = RightPane(self.tabs, config)
         size_policy.setHorizontalStretch(2)
         self.tabs.setSizePolicy(size_policy)
         self.tabs.setMinimumSize(QSize(600, 500))
@@ -407,7 +444,9 @@ class PoB_UI:
         self.central_window.setCentralWidget(h_splitter_1)
         main_win.setCentralWidget(self.central_window)
         main_win.setMenuBar(menubar)
+        main_win.addToolBar(Qt.TopToolBarArea, self.toolBar)
         main_win.setStatusBar(statusbar)
+        self.tabs.setFocus()
         # setup_ui
 
     def set_tab_focus(self, index):
@@ -453,4 +492,4 @@ class PoB_UI:
         self.right_pane.notes_text_edit.setCurrentFont(self.right_pane.font_combo_box.currentFont())
         self.right_pane.notes_text_edit.setFocus()
 
-    # PoB_UI
+    # PoBUI

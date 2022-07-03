@@ -8,7 +8,7 @@ import sys  # Only needed for access to command line arguments
 import atexit
 
 import qdarktheme
-from qdarktheme.qtpy.QtCore import QDir, QSize, Qt, Slot
+from qdarktheme.qtpy.QtCore import QDir, QSize, Qt, Slot, QCoreApplication
 from qdarktheme.qtpy.QtGui import QAction, QActionGroup, QFont, QIcon
 from qdarktheme.qtpy.QtWidgets import (
     QApplication,
@@ -32,28 +32,33 @@ from qdarktheme.widget_gallery.ui.dock_ui import DockUI
 from qdarktheme.widget_gallery.ui.frame_ui import FrameUI
 from qdarktheme.widget_gallery.ui.widgets_ui import WidgetsUI
 
-from pob_ui import PoB_UI
+from pob_ui import PoBUI
 from pob_config import Config, color_codes
 from build import Build
 
-import ui_utils
+_translate = QCoreApplication.translate
+
+
+"""
+MainWindow
+Owns and manages all the top level components. The bulk of the heavy lifting is done by the PoB_UI class
+"""
 
 
 class MainWindow(QMainWindow):
-    def __init__(self) -> None:
+    def __init__(self, _app) -> None:
         super(MainWindow, self).__init__()
         # Setup config
-        self.config = Config()
+        self.config = Config(self, _app)
+        self.config.win = self
         self.config.read_config()
 
         atexit.register(self.exit_handler)
         self.setMinimumSize(QSize(800, 600))
         self.setWindowTitle("Path of Building")  # Do not translate
         self.resize(self.config.size())
-        # enable again if you want icons,
-        # QDir.addSearchPath("icons", f"{get_qdarktheme_root_path().as_posix()}/widget_gallery/svg")
 
-        self._ui = PoB_UI(self, self.config)
+        self._ui = PoBUI(self, self.config)
         self._theme = "dark"
         self._border_radius = "rounded"
 
@@ -61,8 +66,8 @@ class MainWindow(QMainWindow):
         self._ui.build = self.build
 
         # Connect actions
-        for action in self._ui.actions_theme:
-            action.triggered.connect(self._change_theme)
+        # for action in self._ui.actions_theme:
+        #     action.triggered.connect(self._change_theme)
         self._ui.actions_theme_dark_light.triggered.connect(self._change_theme2)
         self._ui.action_exit.triggered.connect(self._close_app)
         self._ui.action_open.triggered.connect(self._build_open)
@@ -131,26 +136,19 @@ class MainWindow(QMainWindow):
             # write the file
             # build.save_build(filename)
 
-    # Tech Demo. Two menu items to change theme
-    @Slot()
-    def _change_theme(self) -> None:
-        action = self.sender()
-        self._theme = action.text()
-        # print(action.text())
-        QApplication.instance().setStyleSheet(
-            qdarktheme.load_stylesheet(self._theme, self._border_radius)
-        )
-
-    # Tech Demo. Switch just one menu item
     @Slot()
     def _change_theme2(self) -> None:
-        action = self._ui.actions_theme_dark_light
-        if action.text() == "Dark":
+        self.change_theme(self._ui.actions_theme_dark_light.text())
+
+    # move me to pob_ui
+    def change_theme(self, new_theme):
+        if new_theme == "Dark":
             self._theme = "dark"
-            action.setText("Light")
+            self._ui.actions_theme_dark_light.setText("Light")
         else:
             self._theme = "light"
-            action.setText("Dark")
+            self._ui.actions_theme_dark_light.setText("Dark")
+
         QApplication.instance().setStyleSheet(
             qdarktheme.load_stylesheet(self._theme, self._border_radius)
         )
@@ -158,7 +156,7 @@ class MainWindow(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication([])
-    window = MainWindow()
+    window = MainWindow(app)
     window.menuBar().setNativeMenuBar(False)
     app.setStyleSheet(qdarktheme.load_stylesheet())
     window.show()

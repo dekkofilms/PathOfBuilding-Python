@@ -1,6 +1,7 @@
 """
 Functions for reading and writing xml
 
+This is a base PoB class. It doesn't import any other PoB classes
 """
 
 import os

@@ -61,9 +61,10 @@ class Build:
         self.name = name
         # self.player = player.Player()
         self.filename = ""
-        self.build = dict()
+        self.build = None
         self.config = config
-        self.tree = Tree(self.config)
+        # self.tree = Tree(self.config)
+        self.trees = dict()
         self.ui = None
 
     def __repr__(self) -> str:

@@ -1,22 +1,28 @@
 """
 Configuration Class
 
-Defines reading and writing the setting xml ass well as the settings therein
+Defines reading and writing the settings xml as well as the settings therein
+
+This is a base PoB class. It doesn't import any other PoB ui classes
+Imports pob_file
+
 """
 
 import sys
 import os
 
-from qdarktheme.qtpy.QtCore import QDir, QSize, Qt, Slot
+from qdarktheme.qtpy.QtCore import QDir, QSize, Qt, Slot, QCoreApplication
+from qdarktheme.qtpy.QtWidgets import QApplication
 
 import pob_file
 import enumerations
+_translate = QCoreApplication.translate
 
 # Default config incase the settings file doesn't exist
 default_config = {
     "PathOfBuilding": {
         "Misc": {
-            "theme": "Fusion",
+            "theme": "Dark",
             "slotOnlyTooltips": "true",
             "showTitlebarName": "true",
             "showWarnings": "true",
@@ -124,7 +130,10 @@ def str2bool(in_str):
 
 
 class Config:
-    def __init__(self) -> None:
+    def __init__(self, _app, _win) -> None:
+        # To reduce circular references, have the app and main window here
+        self.app = _app
+        self.win = _win
         self.config = {}
         self.exeDir = os.path.dirname(os.path.abspath(sys.argv[0]))
         self.settingsFile = os.path.join(self.exeDir, "settings.xml")
