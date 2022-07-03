@@ -123,7 +123,7 @@ color_codes["PHYS"] = color_codes["NORMAL"]
 
 
 # return a boolean from a string. As the settings could be manipulated by a human, we can't trust eval()
-# EG: eval('os.system(‘rm -rf /’)')
+#   EG: eval('os.system(`rm -rf /`)')
 # return True if it looks like it could be true, otherwise false
 def str2bool(in_str):
     return in_str.lower() in ("yes", "true", "t", "1", "on")
@@ -157,7 +157,11 @@ class Config:
         pob_file.write_xml(self.settingsFile, self.config)
 
     def theme(self):
-        return self.config["PathOfBuilding"]["Misc"]["theme"]
+        try:
+            _theme = self.config["PathOfBuilding"]["Misc"]["theme"]
+        except KeyError:
+            _theme = "Dark"
+        return _theme
 
     def set_theme(self, new_theme):
         print(new_theme)
@@ -248,7 +252,7 @@ class Config:
         output = dict()
         try:
             output = self.config["PathOfBuilding"]["recentBuilds"]
-        except:
+        except KeyError:
             print("recentBuilds exception")
             output = {
                 "r0": "",
@@ -264,10 +268,9 @@ class Config:
         try:
             width = int(self.config["PathOfBuilding"]["size"]["width"])
             height = int(self.config["PathOfBuilding"]["size"]["height"])
-        except:
+        except KeyError:
             width = 800
             height = 600
-            self.set_size(QSize(width, height))
         return QSize(width, height)
 
     def set_size(self, new_size: QSize):
