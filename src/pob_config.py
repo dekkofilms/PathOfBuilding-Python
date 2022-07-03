@@ -262,17 +262,13 @@ class Config:
         return OrderedDict(output)
 
     def add_recent_build(self, filename):
-        print("add_recent_build")
-        print(filename)
-        print(self.config["PathOfBuilding"]["recentBuilds"])
-        print(self.config["PathOfBuilding"]["recentBuilds"].values())
         if filename not in self.config["PathOfBuilding"]["recentBuilds"].values():
-            for idx in [3,2,1,0]:
+            for idx in [3, 2, 1, 0]:
                 print(idx)
-                self.config["PathOfBuilding"]["recentBuilds"]["r{}".format(idx+1)] = self.config["PathOfBuilding"]["recentBuilds"]["r{}".format(idx)]
+                self.config["PathOfBuilding"]["recentBuilds"][
+                    "r{}".format(idx + 1)
+                ] = self.config["PathOfBuilding"]["recentBuilds"]["r{}".format(idx)]
             self.config["PathOfBuilding"]["recentBuilds"]["r0"] = filename
-        print(self.config["PathOfBuilding"]["recentBuilds"])
-
 
     def size(self):
         try:

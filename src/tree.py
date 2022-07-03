@@ -10,8 +10,25 @@ need to be supported for backwards compatibility reason.
 
 """
 import os, re
-from qdarktheme.qtpy.QtCore import QSize, QDir, QRect, QRectF, Qt, Slot, QCoreApplication
-from qdarktheme.qtpy.QtGui import QAction, QActionGroup, QFont, QIcon, QPixmap, QBrush, QColor, QPainter
+from qdarktheme.qtpy.QtCore import (
+    QSize,
+    QDir,
+    QRect,
+    QRectF,
+    Qt,
+    Slot,
+    QCoreApplication,
+)
+from qdarktheme.qtpy.QtGui import (
+    QAction,
+    QActionGroup,
+    QFont,
+    QIcon,
+    QPixmap,
+    QBrush,
+    QColor,
+    QPainter,
+)
 from qdarktheme.qtpy.QtWidgets import (
     QApplication,
     QColorDialog,
@@ -49,6 +66,7 @@ from qdarktheme.qtpy.QtWidgets import (
 
 import pob_file, ui_utils, enumerations
 from pob_config import Config, color_codes
+
 # from Build import Build
 
 _VERSION_ = "3.18"
@@ -77,9 +95,7 @@ class Tree:
         self.tree_version_path = os.path.join(
             self.config.tree_data_path, re.sub("\.", "_", new_vers)
         )
-        self.json_file_path = os.path.join(
-            self.tree_version_path, "tree.json"
-        )
+        self.json_file_path = os.path.join(self.tree_version_path, "tree.json")
 
     def load(self, vers=_VERSION_):
         if os.path.exists(self.json_file_path):

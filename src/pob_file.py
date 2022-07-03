@@ -12,12 +12,12 @@ import json
 def read_xml(filename):
     if os.path.exists(filename):
         try:
-            with open(filename, 'r') as xml_file:
+            with open(filename, "r") as xml_file:
                 xml_content = xml_file.read()
                 ordered_dict = xmltodict.parse(xml_content)
                 return ordered_dict
         except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
-            print('Unable to open %s' % filename)
+            print("Unable to open %s" % filename)
     return None
     # file_ptr = None
     # ordered_dict = None
@@ -35,11 +35,11 @@ def read_xml(filename):
 
 def write_xml(filename, ordered_dict):
     try:
-        with open(filename, 'w') as xml_file:
+        with open(filename, "w") as xml_file:
             xml_content = xmltodict.unparse(ordered_dict, pretty=True)
             xml_file.write(xml_content)
     except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
-        print('Unable to write to %s' % filename)
+        print("Unable to write to %s" % filename)
     # file_ptr = None
     # try:
     #     file_ptr = open(filename, "w")
@@ -52,17 +52,17 @@ def write_xml(filename, ordered_dict):
 def read_json(filename):
     if os.path.exists(filename):
         try:
-            with open(filename, 'r') as json_file:
+            with open(filename, "r") as json_file:
                 ordered_dict = json.load(json_file)
                 return ordered_dict
         except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
-            print('Unable to open %s' % filename)
+            print("Unable to open %s" % filename)
     return None
 
 
 def write_json(filename, ordered_dict):
     try:
-        with open(filename, 'w') as json_file:
+        with open(filename, "w") as json_file:
             json.dump(ordered_dict, json_file)
     except EnvironmentError:  # parent of IOError, OSError *and* WindowsError where available
-        print('Unable to write to %s' % filename)
+        print("Unable to write to %s" % filename)

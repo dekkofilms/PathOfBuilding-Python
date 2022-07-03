@@ -51,7 +51,7 @@ default_build = {
             "zoomX": "-54.5",
         },
         "Items": {},
-        "Config": {}
+        "Config": {},
     }
 }
 
@@ -67,6 +67,7 @@ class Build:
         # self.tree = Tree(self.config)
         self.trees = dict()
         self.ui = None
+        self.need_saving = False
 
     def __repr__(self) -> str:
         ret_str = f"[BUILD]: '{self.name}'\n"
@@ -84,7 +85,7 @@ class Build:
 
     def load_build(self, filename):
         name = "temp"
-        print(filename)
+        # print(filename)
         if os.path.exists(filename):
             self.build = pob_file.read_xml(filename)
         if self.build is None:
@@ -92,18 +93,9 @@ class Build:
             self.new_build()
         else:
             self.filename = filename
-            name = os.path.splitext(os.path.basename(filename))
+            name, ext = os.path.splitext(os.path.basename(filename))
         self.set_build_name(name)
 
     def save_build(self, filename):
         self.filename = filename
         pob_file.write_xml(filename, self.build)
-
-
-def test() -> None:
-    build = Build()
-    print(build)
-
-
-if __name__ == "__main__":
-    test()

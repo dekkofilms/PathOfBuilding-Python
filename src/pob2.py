@@ -101,7 +101,9 @@ class MainWindow(QMainWindow):
             # open the file
             self.build.load_build(filename)
             if self.build.build is not None:
-                self.config.add_recent_build(filename.replace(self.config.buildPath, ''))
+                self.config.add_recent_build(
+                    filename.replace(self.config.buildPath, "")
+                )
 
     @Slot()
     def _build_save_as(self):

@@ -34,7 +34,7 @@ def yes_no_dialog(win, title, text):
         return False
 
 
-def ok_dialog(win, title, text, btn_text = "OK"):
+def ok_dialog(win, title, text, btn_text="OK"):
     dlg = QMessageBox(win)
     dlg.setWindowTitle(title)
     dlg.setText(text)
@@ -43,7 +43,7 @@ def ok_dialog(win, title, text, btn_text = "OK"):
     dlg.exec_()
 
 
-def critical_dialog(win, title, text, btn_text = "Close"):
+def critical_dialog(win, title, text, btn_text="Close"):
     dlg = QMessageBox(win)
     dlg.setWindowTitle(title)
     dlg.setText(text)

@@ -117,7 +117,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         font_spin_box.valueChanged.connect(self.set_notes_font_size)  #
         self.colour_combo_box.currentTextChanged.connect(self.set_notes_font_colour)  #
         # tab indexes are 0 based
-        self.tab_focus = {0: self.tabWidget, 1: self.tabWidget, 2: self.tabWidget, 3: self.notes_text_edit}
+        self.tab_focus = {
+            0: self.tabWidget,
+            1: self.tabWidget,
+            2: self.tabWidget,
+            3: self.notes_text_edit,
+        }
         # build_notes_tab
 
     def set_tab_focus(self, index):

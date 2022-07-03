@@ -4,8 +4,17 @@ Path of Building UI class
 Sets up and connects internal UI components
 """
 import qdarktheme
-from qdarktheme.qtpy.QtCore import QSize, QDir, QRect, QRectF, Qt, Slot, QCoreApplication
-from qdarktheme.qtpy.QtGui import QAction, QActionGroup, QFont, QIcon, QPixmap, QBrush, QColor, QPainter
+from qdarktheme.qtpy.QtCore import QSize, QDir, QRect, QRectF, Qt, Slot
+from qdarktheme.qtpy.QtGui import (
+    QAction,
+    QActionGroup,
+    QFont,
+    QIcon,
+    QPixmap,
+    QBrush,
+    QColor,
+    QPainter,
+)
 from qdarktheme.qtpy.QtWidgets import (
     QApplication,
     QColorDialog,
@@ -78,7 +87,7 @@ class TreeView(QGraphicsView):
     def has_photo(self):
         return not self._empty
 
-    def fitInView(self, scale=True, factor = None):
+    def fitInView(self, scale=True, factor=None):
         rect = QRectF(self._photo.pixmap().rect())
         if not rect.isNull():
             self.setSceneRect(rect)
@@ -138,6 +147,7 @@ Class for holding components to display the right side of the vertical splitter
 
 class RightPane:
     """The ui class of dock window."""
+
     def __init__(self, win: QTabWidget, config: Config) -> None:
         super().__init__()
         """Set up ui."""
@@ -148,35 +158,29 @@ class RightPane:
 
         # need the layout to make the label follow window size changes
         self.horizontalLayout_2 = QHBoxLayout(self.tabTree)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
         size_policy2 = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         size_policy2.setHorizontalStretch(0)
         size_policy2.setVerticalStretch(0)
         self.tabTree.setSizePolicy(size_policy2)
         self.tabTree.setFocusPolicy(Qt.TabFocus)
-        self.tabTree.setPhoto(QPixmap(u"c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png"))
+        self.tabTree.setPhoto(
+            QPixmap("c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png")
+        )
         # self.tabTree._photo.setPixmap(QPixmap(u":/Art/TreeData/ClassesRaider.png"))
         self.tabTree.fitInView(False, 0.5)
         self.tabTree.tree = Tree(config)
 
-
-        win.addTab(
-            self.tabTree, "&Tree"
-        )
+        win.addTab(self.tabTree, "&Tree")
 
         ############################################
         # Skills tab
         self.tabSkills = QWidget()
-        win.addTab(
-            self.tabSkills, "&Skills"
-        )
+        win.addTab(self.tabSkills, "&Skills")
 
         ############################################
         # Items tab
         self.tabItems = QWidget()
-        win.addTab(
-            self.tabItems, "&Items"
-        )
+        win.addTab(self.tabItems, "&Items")
 
         ############################################
         # Notes tab
@@ -251,31 +255,44 @@ class LeftPane:
 
         self.bandit_comboBox = QComboBox(win)
         self.bandit_comboBox.addItem("2 Passive Points", "None")
-        self.bandit_comboBox.addItem("Oak (Life Regen, Phys.Dmg. Reduction, Phys.Dmg)", "Oak")
-        self.bandit_comboBox.addItem("Kraityn (Attack/Cast Speed, Avoid Elemental Ailments, Move Speed)", "Kraityn")
-        self.bandit_comboBox.addItem("Alira (Mana Regen, Crit Multiplier, Resists)", "Alira")
-        self.bandit_comboBox.setPlaceholderText(self.config.app.tr(u"Make  a Selection"))
+        self.bandit_comboBox.addItem(
+            "Oak (Life Regen, Phys.Dmg. Reduction, Phys.Dmg)", "Oak"
+        )
+        self.bandit_comboBox.addItem(
+            "Kraityn (Attack/Cast Speed, Avoid Elemental Ailments, Move Speed)",
+            "Kraityn",
+        )
+        self.bandit_comboBox.addItem(
+            "Alira (Mana Regen, Crit Multiplier, Resists)", "Alira"
+        )
+        self.bandit_comboBox.setPlaceholderText(self.config.app.tr("Make  a Selection"))
         # set the ComboBox dropdown width.
-        self.bandit_comboBox.view().setMinimumWidth(self.bandit_comboBox.minimumSizeHint().width())
+        self.bandit_comboBox.view().setMinimumWidth(
+            self.bandit_comboBox.minimumSizeHint().width()
+        )
         self.formLayout.setWidget(0, QFormLayout.FieldRole, self.bandit_comboBox)
 
         major_god_label = QLabel(win)
         self.formLayout.setWidget(1, QFormLayout.LabelRole, major_god_label)
-        major_god_label.setText(u"Major Gods:")
+        major_god_label.setText("Major Gods:")
         self.major_god_comboBox = QComboBox(win)
         self.major_god_comboBox.addItem("Nothing", "None")
         self.major_god_comboBox.addItem("Soul of the Brine King", "TheBrineKing")
         self.major_god_comboBox.addItem("Soul of Lunaris", "Lunaris")
         self.major_god_comboBox.addItem("Soul of Solaris", "Solaris")
         self.major_god_comboBox.addItem("Soul of Arakaali", "Arakaali")
-        self.major_god_comboBox.setPlaceholderText(self.config.app.tr(u"Make  a Selection"))
+        self.major_god_comboBox.setPlaceholderText(
+            self.config.app.tr("Make  a Selection")
+        )
         # set the ComboBox dropdown width.
-        self.major_god_comboBox.view().setMinimumWidth(self.major_god_comboBox.minimumSizeHint().width())
+        self.major_god_comboBox.view().setMinimumWidth(
+            self.major_god_comboBox.minimumSizeHint().width()
+        )
         self.formLayout.setWidget(1, QFormLayout.FieldRole, self.major_god_comboBox)
 
         minor_god_label = QLabel(win)
         self.formLayout.setWidget(2, QFormLayout.LabelRole, minor_god_label)
-        minor_god_label.setText(u"minor Gods:")
+        minor_god_label.setText("minor Gods:")
         self.minor_god_comboBox = QComboBox(win)
         self.minor_god_comboBox.addItem("Nothing", "None")
         self.minor_god_comboBox.addItem("Soul of Gruthkul", "Gruthkul")
@@ -286,9 +303,13 @@ class LeftPane:
         self.minor_god_comboBox.addItem("Soul of Ralakesh", "Ralakesh")
         self.minor_god_comboBox.addItem("Soul of Ryslatha", "Ryslatha")
         self.minor_god_comboBox.addItem("Soul of Shakari", "Shakari")
-        self.minor_god_comboBox.setPlaceholderText(self.config.app.tr(u"Make  a Selection"))
+        self.minor_god_comboBox.setPlaceholderText(
+            self.config.app.tr("Make  a Selection")
+        )
         # set the ComboBox dropdown width.
-        self.minor_god_comboBox.view().setMinimumWidth(self.minor_god_comboBox.minimumSizeHint().width())
+        self.minor_god_comboBox.view().setMinimumWidth(
+            self.minor_god_comboBox.minimumSizeHint().width()
+        )
         self.formLayout.setWidget(2, QFormLayout.FieldRole, self.minor_god_comboBox)
 
         # LeftPane
@@ -320,13 +341,13 @@ class PoBUI:
         )
         self.toolBar = QToolBar(main_win)
         self.toolBar.setToolButtonStyle(Qt.ToolButtonIconOnly)
-        self.toolBar.setAllowedAreas(Qt.BottomToolBarArea|Qt.TopToolBarArea)
+        self.toolBar.setAllowedAreas(Qt.BottomToolBarArea | Qt.TopToolBarArea)
         self.toolBar.setIconSize(QSize(30, 30))
         self.toolBar.setFloatable(False)
 
         # Builds Menu
         # icons: https://icons8.com/icon/set/folders/office
-        self.action_new = QAction(QIcon(u":/Art/file_new"), "Ne&w")
+        self.action_new = QAction(QIcon(":/Art/file_new"), "Ne&w")
         self.action_new.setShortcut("Ctrl+N")
         self.action_open = QAction(QIcon(":/Art/file_open"), "&Open ...")
         self.action_open.setShortcut("Ctrl+O")
@@ -343,34 +364,7 @@ class PoBUI:
         self.menu_builds.addAction(self.action_exit)
         # separator for the recent builds
         self.menu_builds.addSeparator()
-        self.actions_recent_builds = [
-            QAction(rb, main_win)
-            for rb in [
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-            ]
-        ]
-        # self.menu_builds.addActions(self.actions_recent_builds)
-        # self.set_recent_builds_menu_items(config)
-        # Room for "recent" builds
-        # recents = config.recent_builds()
-        # idx = 0
-        # for value in recents.values():
-        #     if value != "-":
-        #         # _action = self.menu_builds.addAction(value)
-        #         # _action = QAction(value)
-        #         # _action = QAction("&%d %s" % (idx, value), self._open_previous_build(value))
-        #         # _action = QAction("&%d %s" % (idx, value))
-        #         # _action.triggered.connect(self._open_previous_build)
-        #         # self.menu_builds.addAction(_action)
-        #
-        #         # _action = self.menu_builds.addAction("&%d.%s" % (idx, value), self._open_previous_build(value))
-        #         _action = self.menu_builds.addAction("&%d.%s" % (idx, value))
-        #         _action.triggered.connect(self._open_previous_build)
-        #         idx += 1
+        self.set_recent_builds_menu_items(config)
 
         # Add things to the toolbar
         self.toolBar.addAction(self.action_new)
@@ -378,10 +372,10 @@ class PoBUI:
         self.toolBar.addAction(self.action_save)
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
-        spacer.setMinimumSize(100,0)
+        spacer.setMinimumSize(100, 0)
         self.toolBar.addWidget(spacer)
         self.points_label = QLabel()
-        self.points_label.setMinimumSize(100,0)
+        self.points_label.setMinimumSize(100, 0)
         self.points_label.setText(" 0 / 123  0 / 8 ")
         self.points_label.setAlignment(Qt.AlignCenter)
         self.toolBar.addWidget(self.points_label)
@@ -463,30 +457,34 @@ class PoBUI:
         self.tabs.setFocus()
         # setup_ui
 
+    # Setup menu entries for all valid recent builds in the settings file
     def set_recent_builds_menu_items(self, config: Config):
+
+        # Lambdas in python share the variable scope they're created in
+        # so make function containing just the lambda
+        def make_connection(v, i):
+            _action.triggered.connect(
+                lambda checked: self._open_previous_build(checked, v, i)
+            )
+
         recents = config.recent_builds()
         idx = 0
         for value in recents.values():
-            print(value)
             if value != "-":
-                action = self.actions_recent_builds[idx]
-                action.setText("&%d.%s" % (idx, value))
-                action.triggered.connect(self._open_previous_build)
-                recent = recents[format("r%d" % idx)]
                 _action = self.menu_builds.addAction("&%d.%s" % (idx, value))
-                _action.triggered.connect(self._open_previous_build)
+                make_connection(value, idx)
                 idx += 1
 
-    # @Slot()
-    def _open_previous_build(self):
-        print("_open_previous_build")
+    # Open a previous build as shown on the Build Menu
+    @Slot()
+    def _open_previous_build(self, bool, value, index):
         # Or does the logic for checking we need to save and save if needed, go here ???
         # if self.build.needs_saving:
         # if ui_utils.save_yes_no(app.tr("Save build"), app.tr("build name goes here"))
-        action = self.menubar.sender()
-        print(type(action))
+        # action = self.menubar.sender()
+        # print(type(action))
         # open the file using the filename in the build.
-        # self.build.load_build(filename)
+        self.build.load_build(value)
 
     def set_tab_focus(self, index):
         self.tab_focus.get(index).setFocus()
@@ -530,7 +528,9 @@ class PoBUI:
         # print("set_notes_font")
         # print(type(self).__name__)
         # action = self.sender()
-        self.right_pane.notes_text_edit.setCurrentFont(self.right_pane.font_combo_box.currentFont())
+        self.right_pane.notes_text_edit.setCurrentFont(
+            self.right_pane.font_combo_box.currentFont()
+        )
         self.right_pane.notes_text_edit.setFocus()
 
     # PoBUI
