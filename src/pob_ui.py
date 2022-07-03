@@ -3,6 +3,7 @@ Path of Building UI class
 
 Sets up and connects internal UI components
 """
+import qdarktheme
 from qdarktheme.qtpy.QtCore import QSize, QDir, QRect, QRectF, Qt, Slot, QCoreApplication
 from qdarktheme.qtpy.QtGui import QAction, QActionGroup, QFont, QIcon, QPixmap, QBrush, QColor, QPainter
 from qdarktheme.qtpy.QtWidgets import (
@@ -74,14 +75,14 @@ class TreeView(QGraphicsView):
         self.setFrameShape(QFrame.NoFrame)
         self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
 
-    def hasPhoto(self):
+    def has_photo(self):
         return not self._empty
 
     def fitInView(self, scale=True, factor = None):
         rect = QRectF(self._photo.pixmap().rect())
         if not rect.isNull():
             self.setSceneRect(rect)
-            if self.hasPhoto():
+            if self.has_photo():
                 unity = self.transform().mapRect(QRectF(0, 0, 1, 1))
                 if factor is None:
                     self.scale(1 / unity.width(), 1 / unity.height())
@@ -102,7 +103,7 @@ class TreeView(QGraphicsView):
         self.fitInView()
 
     def wheelEvent(self, event):
-        if self.hasPhoto():
+        if self.has_photo():
             if event.angleDelta().y() > 0:
                 factor = 1.25
                 self._zoom += 1
@@ -153,7 +154,7 @@ class RightPane:
         size_policy2.setVerticalStretch(0)
         self.tabTree.setSizePolicy(size_policy2)
         self.tabTree.setFocusPolicy(Qt.TabFocus)
-        self.tabTree._photo.setPixmap(QPixmap(u"c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png"))
+        self.tabTree.setPhoto(QPixmap(u"c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png"))
         # self.tabTree._photo.setPixmap(QPixmap(u":/Art/TreeData/ClassesRaider.png"))
         self.tabTree.fitInView(False, 0.5)
         self.tabTree.tree = Tree(config)
@@ -298,6 +299,8 @@ class PoBUI:
         """Set up ui."""
         self.build = None
         self.config = config
+        self._theme = "dark"
+        self._border_radius = "rounded"
 
         # ######################  STATUS BAR  ######################
         statusbar = QStatusBar(main_win)
@@ -383,8 +386,7 @@ class PoBUI:
         # --- insert others before theme ---
 
         menu_options.addSeparator()
-        # opposite of the default theme, should always show the action you are about to do
-        self.actions_theme_dark_light = QAction("Light")
+        self.actions_theme_dark_light = QAction("TBA")
         self.actions_theme_dark_light.setShortcut("Ctrl+0")
         menu_options.addAction(self.actions_theme_dark_light)
 
@@ -463,6 +465,20 @@ class PoBUI:
                 action.setText(recent)
             else:
                 action.setVisible(False)
+
+    # Do all actions needed to change between light and dark
+    def set_theme(self, new_theme):
+        if new_theme == "Dark":
+            self._theme = "dark"
+            self.actions_theme_dark_light.setText("Light")
+        else:
+            self._theme = "light"
+            self.actions_theme_dark_light.setText("Dark")
+
+        self.config.set_theme(new_theme)
+        QApplication.instance().setStyleSheet(
+            qdarktheme.load_stylesheet(self._theme, self._border_radius)
+        )
 
     # don't use native signals/slot, so focus can be set back to edit box
     @Slot()

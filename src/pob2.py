@@ -7,7 +7,6 @@ External components are the status bar, toolbar (if exists), menus
 import sys  # Only needed for access to command line arguments
 import atexit
 
-import qdarktheme
 from qdarktheme.qtpy.QtCore import QDir, QSize, Qt, Slot, QCoreApplication
 from qdarktheme.qtpy.QtGui import QAction, QActionGroup, QFont, QIcon
 from qdarktheme.qtpy.QtWidgets import (
@@ -59,8 +58,7 @@ class MainWindow(QMainWindow):
         self.resize(self.config.size())
 
         self._ui = PoBUI(self, self.config)
-        self._theme = "dark"
-        self._border_radius = "rounded"
+        self._ui.set_theme(self.config.theme())
 
         self.build = Build(self.config)
         self._ui.build = self.build
@@ -138,26 +136,13 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _change_theme2(self) -> None:
-        self.change_theme(self._ui.actions_theme_dark_light.text())
+        self._ui.set_theme(self._ui.actions_theme_dark_light.text())
 
-    # move me to pob_ui
-    def change_theme(self, new_theme):
-        if new_theme == "Dark":
-            self._theme = "dark"
-            self._ui.actions_theme_dark_light.setText("Light")
-        else:
-            self._theme = "light"
-            self._ui.actions_theme_dark_light.setText("Dark")
-
-        QApplication.instance().setStyleSheet(
-            qdarktheme.load_stylesheet(self._theme, self._border_radius)
-        )
 
 
 if __name__ == "__main__":
     app = QApplication([])
     window = MainWindow(app)
     window.menuBar().setNativeMenuBar(False)
-    app.setStyleSheet(qdarktheme.load_stylesheet())
     window.show()
     app.exec()

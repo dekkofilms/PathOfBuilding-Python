@@ -134,7 +134,7 @@ class Config:
         # To reduce circular references, have the app and main window here
         self.app = _app
         self.win = _win
-        self.config = {}
+        self.config = None
         self.exeDir = os.path.dirname(os.path.abspath(sys.argv[0]))
         self.settingsFile = os.path.join(self.exeDir, "settings.xml")
         self.buildPath = os.path.join(self.exeDir, "builds")
@@ -150,6 +150,7 @@ class Config:
             # print(self.config)
         if self.config is None:
             self.config = default_config
+            print(self.config)
 
     def write_config(self):
         # print(self.config)
@@ -159,6 +160,7 @@ class Config:
         return self.config["PathOfBuilding"]["Misc"]["theme"]
 
     def set_theme(self, new_theme):
+        print(new_theme)
         self.config["PathOfBuilding"]["Misc"]["theme"] = new_theme
 
     def slotOnlyTooltips(self):
