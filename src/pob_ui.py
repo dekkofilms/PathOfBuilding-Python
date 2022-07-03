@@ -60,7 +60,7 @@ TreeView
 
 
 class TreeView(QGraphicsView):
-    def __init__(self, parent):
+    def __init__(self):
         super(TreeView, self).__init__()
         self._zoom = 0
         self._empty = True
@@ -115,8 +115,8 @@ class TreeView(QGraphicsView):
             else:
                 self.scale(factor, factor)
             t = self.transform()
-            print(t.m11())
-            print(t.m22())
+            # print(t.m11())
+            # print(t.m22())
 
     # def toggleDragMode(self):
     #     if self.dragMode() == QGraphicsView.ScrollHandDrag:
@@ -144,7 +144,7 @@ class RightPane:
 
         ############################################
         # Tree tab
-        self.tabTree = TreeView(self)
+        self.tabTree = TreeView()
 
         # need the layout to make the label follow window size changes
         self.horizontalLayout_2 = QHBoxLayout(self.tabTree)
@@ -161,21 +161,21 @@ class RightPane:
 
 
         win.addTab(
-            self.tabTree, QCoreApplication.translate("MainWindow", "&Tree", None)
+            self.tabTree, "&Tree"
         )
 
         ############################################
         # Skills tab
         self.tabSkills = QWidget()
         win.addTab(
-            self.tabSkills, QCoreApplication.translate("MainWindow", "&Skills", None)
+            self.tabSkills, "&Skills"
         )
 
         ############################################
         # Items tab
         self.tabItems = QWidget()
         win.addTab(
-            self.tabItems, QCoreApplication.translate("MainWindow", "&Items", None)
+            self.tabItems, "&Items"
         )
 
         ############################################
@@ -231,6 +231,7 @@ Class for holding components to display the left side of the vertical splitter
 class LeftPane:
     def __init__(self, win: QFrame, config: Config) -> None:
         super().__init__()
+        self.config = config
         """Set up ui."""
         size_policy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         size_policy.setHorizontalStretch(1)
@@ -245,7 +246,7 @@ class LeftPane:
         self.formLayout.setContentsMargins(0, 0, 0, 0)
 
         bandit_label = QLabel(win)
-        bandit_label.setText(QCoreApplication.translate("MainWindow", u"Bandits:", None))
+        bandit_label.setText("Bandits:")
         self.formLayout.setWidget(0, QFormLayout.LabelRole, bandit_label)
 
         self.bandit_comboBox = QComboBox(win)
@@ -253,28 +254,28 @@ class LeftPane:
         self.bandit_comboBox.addItem("Oak (Life Regen, Phys.Dmg. Reduction, Phys.Dmg)", "Oak")
         self.bandit_comboBox.addItem("Kraityn (Attack/Cast Speed, Avoid Elemental Ailments, Move Speed)", "Kraityn")
         self.bandit_comboBox.addItem("Alira (Mana Regen, Crit Multiplier, Resists)", "Alira")
-        self.bandit_comboBox.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Make  a Selection", None))
+        self.bandit_comboBox.setPlaceholderText(self.config.app.tr(u"Make  a Selection"))
         # set the ComboBox dropdown width.
         self.bandit_comboBox.view().setMinimumWidth(self.bandit_comboBox.minimumSizeHint().width())
         self.formLayout.setWidget(0, QFormLayout.FieldRole, self.bandit_comboBox)
 
         major_god_label = QLabel(win)
         self.formLayout.setWidget(1, QFormLayout.LabelRole, major_god_label)
-        major_god_label.setText(QCoreApplication.translate("MainWindow", u"Major Gods:", None))
+        major_god_label.setText(u"Major Gods:")
         self.major_god_comboBox = QComboBox(win)
         self.major_god_comboBox.addItem("Nothing", "None")
         self.major_god_comboBox.addItem("Soul of the Brine King", "TheBrineKing")
         self.major_god_comboBox.addItem("Soul of Lunaris", "Lunaris")
         self.major_god_comboBox.addItem("Soul of Solaris", "Solaris")
         self.major_god_comboBox.addItem("Soul of Arakaali", "Arakaali")
-        self.major_god_comboBox.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Make  a Selection", None))
+        self.major_god_comboBox.setPlaceholderText(self.config.app.tr(u"Make  a Selection"))
         # set the ComboBox dropdown width.
         self.major_god_comboBox.view().setMinimumWidth(self.major_god_comboBox.minimumSizeHint().width())
         self.formLayout.setWidget(1, QFormLayout.FieldRole, self.major_god_comboBox)
 
         minor_god_label = QLabel(win)
         self.formLayout.setWidget(2, QFormLayout.LabelRole, minor_god_label)
-        minor_god_label.setText(QCoreApplication.translate("MainWindow", u"minor Gods:", None))
+        minor_god_label.setText(u"minor Gods:")
         self.minor_god_comboBox = QComboBox(win)
         self.minor_god_comboBox.addItem("Nothing", "None")
         self.minor_god_comboBox.addItem("Soul of Gruthkul", "Gruthkul")
@@ -285,7 +286,7 @@ class LeftPane:
         self.minor_god_comboBox.addItem("Soul of Ralakesh", "Ralakesh")
         self.minor_god_comboBox.addItem("Soul of Ryslatha", "Ryslatha")
         self.minor_god_comboBox.addItem("Soul of Shakari", "Shakari")
-        self.minor_god_comboBox.setPlaceholderText(QCoreApplication.translate("MainWindow", u"Make  a Selection", None))
+        self.minor_god_comboBox.setPlaceholderText(self.config.app.tr(u"Make  a Selection"))
         # set the ComboBox dropdown width.
         self.minor_god_comboBox.view().setMinimumWidth(self.minor_god_comboBox.minimumSizeHint().width())
         self.formLayout.setWidget(2, QFormLayout.FieldRole, self.minor_god_comboBox)
@@ -306,9 +307,9 @@ class PoBUI:
         statusbar = QStatusBar(main_win)
 
         # ######################  MENU BAR  ######################
-        menubar = QMenuBar(main_win)
+        self.menubar = QMenuBar(main_win)
         # Remove the space that the icon reserves. If you want check boxes or icons, then delete this section
-        menubar.setStyleSheet(
+        self.menubar.setStyleSheet(
             "QMenu::item {"
             "padding: 2px 6px 2px 6px;"
             "}"
@@ -334,12 +335,13 @@ class PoBUI:
         self.action_exit = QAction("E&xit")
         self.action_exit.setShortcut("Ctrl+X")
 
-        self.menu_builds = menubar.addMenu("&Builds")
+        self.menu_builds = self.menubar.addMenu("&Builds")
         self.menu_builds.addActions(
             (self.action_new, self.action_open, self.action_save)
         )
         self.menu_builds.addSeparator()
         self.menu_builds.addAction(self.action_exit)
+        # separator for the recent builds
         self.menu_builds.addSeparator()
         self.actions_recent_builds = [
             QAction(rb, main_win)
@@ -351,14 +353,24 @@ class PoBUI:
                 "4",
             ]
         ]
-        self.menu_builds.addActions(self.actions_recent_builds)
-        self.set_recent_builds(config)
+        # self.menu_builds.addActions(self.actions_recent_builds)
+        # self.set_recent_builds_menu_items(config)
         # Room for "recent" builds
-        # recents = config.recentBuilds()
+        # recents = config.recent_builds()
+        # idx = 0
         # for value in recents.values():
-        #     print("value: %s" % value)
-        #     if value != "":
-        #         self.ui.menu_builds.addAction(value)
+        #     if value != "-":
+        #         # _action = self.menu_builds.addAction(value)
+        #         # _action = QAction(value)
+        #         # _action = QAction("&%d %s" % (idx, value), self._open_previous_build(value))
+        #         # _action = QAction("&%d %s" % (idx, value))
+        #         # _action.triggered.connect(self._open_previous_build)
+        #         # self.menu_builds.addAction(_action)
+        #
+        #         # _action = self.menu_builds.addAction("&%d.%s" % (idx, value), self._open_previous_build(value))
+        #         _action = self.menu_builds.addAction("&%d.%s" % (idx, value))
+        #         _action.triggered.connect(self._open_previous_build)
+        #         idx += 1
 
         # Add things to the toolbar
         self.toolBar.addAction(self.action_new)
@@ -382,12 +394,12 @@ class PoBUI:
         self.toolBar.addWidget(self.level_spinbox)
 
         # Options Menu Actions
-        menu_options = menubar.addMenu("&Options")
+        menu_options = self.menubar.addMenu("&Options")
         # --- insert others before theme ---
 
         menu_options.addSeparator()
         self.actions_theme_dark_light = QAction("TBA")
-        self.actions_theme_dark_light.setShortcut("Ctrl+0")
+        # self.actions_theme_dark_light.setShortcut("Ctrl+0")
         menu_options.addAction(self.actions_theme_dark_light)
 
         # Main Window
@@ -445,26 +457,39 @@ class PoBUI:
 
         self.central_window.setCentralWidget(h_splitter_1)
         main_win.setCentralWidget(self.central_window)
-        main_win.setMenuBar(menubar)
+        main_win.setMenuBar(self.menubar)
         main_win.addToolBar(Qt.TopToolBarArea, self.toolBar)
         main_win.setStatusBar(statusbar)
         self.tabs.setFocus()
         # setup_ui
 
+    def set_recent_builds_menu_items(self, config: Config):
+        recents = config.recent_builds()
+        idx = 0
+        for value in recents.values():
+            print(value)
+            if value != "-":
+                action = self.actions_recent_builds[idx]
+                action.setText("&%d.%s" % (idx, value))
+                action.triggered.connect(self._open_previous_build)
+                recent = recents[format("r%d" % idx)]
+                _action = self.menu_builds.addAction("&%d.%s" % (idx, value))
+                _action.triggered.connect(self._open_previous_build)
+                idx += 1
+
+    # @Slot()
+    def _open_previous_build(self):
+        print("_open_previous_build")
+        # Or does the logic for checking we need to save and save if needed, go here ???
+        # if self.build.needs_saving:
+        # if ui_utils.save_yes_no(app.tr("Save build"), app.tr("build name goes here"))
+        action = self.menubar.sender()
+        print(type(action))
+        # open the file using the filename in the build.
+        # self.build.load_build(filename)
+
     def set_tab_focus(self, index):
         self.tab_focus.get(index).setFocus()
-
-    def set_recent_builds(self, config: Config):
-        recents = config.recentBuilds()
-        for x in range(5):
-            print(x)
-            action = self.actions_recent_builds[x]
-            recent = recents[format("r%d" % x)]
-            if recent != "-":
-                action.setVisible(True)
-                action.setText(recent)
-            else:
-                action.setVisible(False)
 
     # Do all actions needed to change between light and dark
     def set_theme(self, new_theme):

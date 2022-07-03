@@ -10,13 +10,14 @@ Imports pob_file
 
 import sys
 import os
+from collections import OrderedDict
 
 from qdarktheme.qtpy.QtCore import QDir, QSize, Qt, Slot, QCoreApplication
-from qdarktheme.qtpy.QtWidgets import QApplication
 
 import pob_file
 import enumerations
-_translate = QCoreApplication.translate
+
+program_title = "Path of Building"
 
 # Default config incase the settings file doesn't exist
 default_config = {
@@ -146,14 +147,11 @@ class Config:
 
     def read_config(self):
         if os.path.exists(self.settingsFile):
-            self.config = pob_file.read_xml(self.settingsFile)
-            # print(self.config)
+            self.config = OrderedDict(pob_file.read_xml(self.settingsFile))
         if self.config is None:
             self.config = default_config
-            print(self.config)
 
     def write_config(self):
-        # print(self.config)
         pob_file.write_xml(self.settingsFile, self.config)
 
     def theme(self):
@@ -164,7 +162,6 @@ class Config:
         return _theme
 
     def set_theme(self, new_theme):
-        print(new_theme)
         self.config["PathOfBuilding"]["Misc"]["theme"] = new_theme
 
     def slotOnlyTooltips(self):
@@ -248,7 +245,7 @@ class Config:
     def set_betaMode(self, new_bool):
         self.config["PathOfBuilding"]["Misc"]["betaMode"] = str(new_bool)
 
-    def recentBuilds(self):
+    def recent_builds(self):
         output = dict()
         try:
             output = self.config["PathOfBuilding"]["recentBuilds"]
@@ -262,7 +259,20 @@ class Config:
                 "r4": "",
             }
         self.config["PathOfBuilding"]["recentBuilds"] = output
-        return output
+        return OrderedDict(output)
+
+    def add_recent_build(self, filename):
+        print("add_recent_build")
+        print(filename)
+        print(self.config["PathOfBuilding"]["recentBuilds"])
+        print(self.config["PathOfBuilding"]["recentBuilds"].values())
+        if filename not in self.config["PathOfBuilding"]["recentBuilds"].values():
+            for idx in [3,2,1,0]:
+                print(idx)
+                self.config["PathOfBuilding"]["recentBuilds"]["r{}".format(idx+1)] = self.config["PathOfBuilding"]["recentBuilds"]["r{}".format(idx)]
+            self.config["PathOfBuilding"]["recentBuilds"]["r0"] = filename
+        print(self.config["PathOfBuilding"]["recentBuilds"])
+
 
     def size(self):
         try:

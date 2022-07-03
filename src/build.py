@@ -16,7 +16,7 @@ import os
 import tree
 import player
 import pob_file
-from pob_config import Config, color_codes
+from pob_config import Config, color_codes, program_title
 from tree import Tree
 
 default_build = {
@@ -58,11 +58,12 @@ default_build = {
 
 class Build:
     def __init__(self, config: Config, name: str = "temp") -> None:
-        self.name = name
+        self.config = config
+        self.name = ""
+        self.set_build_name(name)
         # self.player = player.Player()
         self.filename = ""
         self.build = None
-        self.config = config
         # self.tree = Tree(self.config)
         self.trees = dict()
         self.ui = None
@@ -73,18 +74,26 @@ class Build:
         ret_str += f"{self.player}"
         return ret_str
 
+    def set_build_name(self, new_name):
+        self.name = new_name
+        self.config.win.setWindowTitle("%s - %s" % (program_title, new_name))
+
     def new_build(self):
         self.build = default_build
+        self.set_build_name("temp")
 
     def load_build(self, filename):
+        name = "temp"
+        print(filename)
         if os.path.exists(filename):
             self.build = pob_file.read_xml(filename)
-            # print(self.build)
         if self.build is None:
             # message box for failure
             self.new_build()
         else:
             self.filename = filename
+            name = os.path.splitext(os.path.basename(filename))
+        self.set_build_name(name)
 
     def save_build(self, filename):
         self.filename = filename
