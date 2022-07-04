@@ -55,9 +55,8 @@ from qdarktheme.widget_gallery.ui.dock_ui import DockUI
 from qdarktheme.widget_gallery.ui.frame_ui import FrameUI
 from qdarktheme.widget_gallery.ui.widgets_ui import WidgetsUI
 
-from pob_config import Config, color_codes
+from pob_config import Config, ColourCodes
 from build import Build
-from enumerations import ColorCodes
 from tree import Tree
 import main_rc
 
@@ -210,7 +209,7 @@ class RightPane:
         self.colour_combo_box.setObjectName("colourComboBox")
         self.colour_combo_box.setMinimumSize(QSize(140, 0))
         # self.colour_combo_box.addItems(color_codes.keys())
-        self.colour_combo_box.addItems([colour.name for colour in ColorCodes])
+        self.colour_combo_box.addItems([colour.name for colour in ColourCodes])
         self.font_layout.addWidget(self.colour_combo_box)
         self.horizontal_spacer = QSpacerItem(
             88, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
@@ -498,7 +497,7 @@ class PoBUI:
             self._theme = "light"
             self.actions_theme_dark_light.setText("Dark")
 
-        self.config.set_theme(new_theme)
+        self.config.theme = new_theme
         QApplication.instance().setStyleSheet(
             qdarktheme.load_stylesheet(self._theme, self._border_radius)
         )
@@ -519,7 +518,7 @@ class PoBUI:
         if colour_name == "NORMAL":
             self.right_pane.notes_text_edit.setTextColor(self.defaultTextColour)
         else:
-            self.right_pane.notes_text_edit.setTextColor(color_codes[colour_name])
+            self.right_pane.notes_text_edit.setTextColor(ColourCodes[colour_name].value)
         self.right_pane.notes_text_edit.setFocus()
 
     # don't use native signals/slot, so focus can be set back to edit box

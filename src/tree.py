@@ -65,7 +65,7 @@ from qdarktheme.qtpy.QtWidgets import (
 )
 
 import pob_file, ui_utils, enumerations
-from pob_config import Config, color_codes
+from pob_config import Config, ColourCodes
 
 # from Build import Build
 

@@ -11,6 +11,7 @@ Imports pob_file
 import sys
 import os
 from collections import OrderedDict
+from enum import Enum
 
 from qdarktheme.qtpy.QtCore import QDir, QSize, Qt, Slot, QCoreApplication
 
@@ -36,6 +37,7 @@ default_config = {
             "defaultGemQuality": "0",
             "showThousandsSeparators": "true",
             "buildSortMode": "NAME",
+            "numRecentBuilds": "5"
         },
         "recentBuilds": {
             "r0": "-",
@@ -47,80 +49,81 @@ default_config = {
     }
 }
 
-custom_colours = {
-    "Custom1": "#282A36",
-    "Custom2": "#F8F8F2",
-    "Custom3": "#44475A",
-    "Custom4": "#6272A4",
-    "Custom5": "#8BE9FD",
-    "Custom6": "#50FA7B",
-    "Custom7": "#FFB86C",
-    "Custom8": "#FF79C6",
-    "Custom9": "#BD93F9",
-}
 
-color_codes = {
-    "NORMAL": "#000000",
-    "MAGIC": "#8888FF",
-    "RARE": "#FFFF77",
-    "UNIQUE": "#AF6025",
-    "RELIC": "#60C060",
-    "GEM": "#1AA29B",
-    "PROPHECY": "#B54BFF",
-    "CURRENCY": "#AA9E82",
-    "CRAFTED": "#B8DAF1",
-    "CUSTOM": "#5CF0BB",
-    "SOURCE": "#88FFFF",
-    "UNSUPPORTED": "#F05050",
-    "WARNING": "#FF9922",
-    "TIP": "#80A080",
-    "FIRE": "#B97123",
-    "COLD": "#3F6DB3",
-    "LIGHTNING": "#ADAA47",
-    "CHAOS": "#D02090",
-    "POSITIVE": "#33FF77",
-    "NEGATIVE": "#DD0022",
-    "OFFENCE": "#E07030",
-    "DEFENCE": "#8080E0",
-    "SCION": "#FFF0F0",
-    "MARAUDER": "#E05030",
-    "RANGER": "#70FF70",
-    "WITCH": "#7070FF",
-    "DUELIST": "#E0E070",
-    "TEMPLAR": "#C040FF",
-    "SHADOW": "#30C0D0",
-    "MAINHAND": "#50FF50",
-    "MAINHANDBG": "#071907",
-    "OFFHAND": "#B7B7FF",
-    "OFFHANDBG": "#070719",
-    "SHAPER": "#55BBFF",
-    "ELDER": "#AA77CC",
-    "FRACTURED": "#A29160",
-    "ADJUDICATOR": "#E9F831",
-    "BASILISK": "#00CB3A",
-    "CRUSADER": "#2946FC",
-    "EYRIE": "#AAB7B8",
-    "CLEANSING": "#F24141",
-    "TANGLE": "#038C8C",
-    "CHILLBG": "#151e26",
-    "FREEZEBG": "#0c262b",
-    "SHOCKBG": "#191732",
-    "SCORCHBG": "#270b00",
-    "BRITTLEBG": "#00122b",
-    "SAPBG": "#261500",
-    "SCOURGE": "#FF6E25",
-}
-color_codes["STRENGTH"] = color_codes["MARAUDER"]
-color_codes["DEXTERITY"] = color_codes["RANGER"]
-color_codes["INTELLIGENCE"] = color_codes["WITCH"]
+class ColourCodes(Enum):
+    NORMAL = 0x000000
+    MAGIC = 0x8888FF
+    RARE = 0xFFFF77
+    UNIQUE = 0xAF6025
+    RELIC = 0x60C060
+    GEM = 0x1AA29B
+    PROPHECY = 0xB54BFF
+    CURRENCY = 0xAA9E82
+    CRAFTED = 0xB8DAF1
+    CUSTOM = 0x5CF0BB
+    SOURCE = 0x88FFFF
+    UNSUPPORTED = 0xF05050
+    WARNING = 0xFF9922
+    TIP = 0x80A080
+    FIRE = 0xB97123
+    COLD = 0x3F6DB3
+    LIGHTNING = 0xADAA47
+    CHAOS = 0xD02090
+    POSITIVE = 0x33FF77
+    NEGATIVE = 0xDD0022
+    OFFENCE = 0xE07030
+    DEFENCE = 0x8080E0
+    SCION = 0xFFF0F0
+    MARAUDER = 0xE05030
+    RANGER = 0x70FF70
+    WITCH = 0x7070FF
+    DUELIST = 0xE0E070
+    TEMPLAR = 0xC040FF
+    SHADOW = 0x30C0D0
+    MAINHAND = 0x50FF50
+    MAINHANDBG = 0x071907
+    OFFHAND = 0xB7B7FF
+    OFFHANDBG = 0x070719
+    SHAPER = 0x55BBFF
+    ELDER = 0xAA77CC
+    FRACTURED = 0xA29160
+    ADJUDICATOR = 0xE9F831
+    BASILISK = 0x00CB3A
+    CRUSADER = 0x2946FC
+    EYRIE = 0xAAB7B8
+    CLEANSING = 0xF24141
+    TANGLE = 0x038C8C
+    CHILLBG = 0x151E26
+    FREEZEBG = 0x0C262B
+    SHOCKBG = 0x191732
+    SCORCHBG = 0x270B00
+    BRITTLEBG = 0x00122B
+    SAPBG = 0x261500
+    SCOURGE = 0xFF6E25
+    STRENGTH = MARAUDER
+    DEXTERITY = RANGER
+    INTELLIGENCE = WITCH
+    LIFE = MARAUDER
+    MANA = WITCH
+    ES = SOURCE
+    WARD = RARE
+    EVASION = POSITIVE
+    RAGE = WARNING
+    PHYS = NORMAL
 
-color_codes["LIFE"] = color_codes["MARAUDER"]
-color_codes["MANA"] = color_codes["WITCH"]
-color_codes["ES"] = color_codes["SOURCE"]
-color_codes["WARD"] = color_codes["RARE"]
-color_codes["EVASION"] = color_codes["POSITIVE"]
-color_codes["RAGE"] = color_codes["WARNING"]
-color_codes["PHYS"] = color_codes["NORMAL"]
+
+class PlayerClasses(Enum):
+    SCION = 0
+    MARAUDER = 1
+    RANGER = 2
+    WITCH = 3
+    DUELIST = 4
+    TEMPLAR = 5
+    SHADOW = 6
+
+
+class PlayerAscendancies(Enum):
+    NONE = None
 
 
 # return a boolean from a string. As the settings could be manipulated by a human, we can't trust eval()
@@ -131,11 +134,10 @@ def str2bool(in_str):
 
 
 class Config:
-    def __init__(self, _app, _win) -> None:
+    def __init__(self, _win, _app) -> None:
         # To reduce circular references, have the app and main window here
-        self.app = _app
         self.win = _win
-        self.config = None
+        self.app = _app
         self.exeDir = os.path.dirname(os.path.abspath(sys.argv[0]))
         self.settingsFile = os.path.join(self.exeDir, "settings.xml")
         self.buildPath = os.path.join(self.exeDir, "builds")
@@ -144,107 +146,139 @@ class Config:
         self.tree_data_path = os.path.join(self.exeDir, "TreeData")
         if not os.path.exists(self.tree_data_path):
             os.makedirs(self.tree_data_path)
+        self.read()
 
-    def read_config(self):
+    def read(self):
         if os.path.exists(self.settingsFile):
             self.config = OrderedDict(pob_file.read_xml(self.settingsFile))
         if self.config is None:
             self.config = default_config
 
-    def write_config(self):
+    def write(self):
         pob_file.write_xml(self.settingsFile, self.config)
 
-    def theme(self):
+    def _get_theme(self):
         try:
             _theme = self.config["PathOfBuilding"]["Misc"]["theme"]
         except KeyError:
             _theme = "Dark"
         return _theme
 
-    def set_theme(self, new_theme):
+    def _set_theme(self, new_theme):
         self.config["PathOfBuilding"]["Misc"]["theme"] = new_theme
 
-    def slotOnlyTooltips(self):
+    def _get_slotOnlyTooltips(self):
         return str2bool(self.config["PathOfBuilding"]["Misc"]["slotOnlyTooltips"])
 
-    def set_slotOnlyTooltips(self, new_bool):
+    def _set_slotOnlyTooltips(self, new_bool):
         self.config["PathOfBuilding"]["Misc"]["slotOnlyTooltips"] = str(new_bool)
 
-    def showTitlebarName(self):
+    def _get_showTitlebarName(self):
         return str2bool(self.config["PathOfBuilding"]["Misc"]["showTitlebarName"])
 
-    def set_showTitlebarName(self, new_bool):
+    def _set_showTitlebarName(self, new_bool):
         self.config["PathOfBuilding"]["Misc"]["showTitlebarName"] = str(new_bool)
 
-    def showWarnings(self):
+    def _get_showWarnings(self):
         return str2bool(self.config["PathOfBuilding"]["Misc"]["showWarnings"])
 
-    def set_showWarnings(self, new_bool):
+    def _set_showWarnings(self, new_bool):
         self.config["PathOfBuilding"]["Misc"]["showWarnings"] = str(new_bool)
 
-    def defaultCharLevel(self):
+    def _get_defaultCharLevel(self):
         return int(self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"])
 
-    def set_defaultCharLevel(self, new_int):
+    def _set_defaultCharLevel(self, new_int):
         self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"] = format(
             "%d" % new_int
         )
 
-    def nodePowerTheme(self):
+    def _get_nodePowerTheme(self):
         return self.config["PathOfBuilding"]["Misc"]["nodePowerTheme"]
 
-    def set_NodePowerTheme(self, new_theme):
+    def _set_nodePowerTheme(self, new_theme):
         self.config["PathOfBuilding"]["Misc"]["nodePowerTheme"] = new_theme
 
-    def connectionProtocol(self):
+    def _get_connectionProtocol(self):
         return self.config["PathOfBuilding"]["Misc"]["connectionProtocol"]
 
-    def set_connectionProtocol(self, new_conn):
+    def _set_connectionProtocol(self, new_conn):
         # what is this for
         self.config["PathOfBuilding"]["Misc"]["connectionProtocol"] = new_conn
 
-    def decimalSeparator(self):
+    def _get_decimalSeparator(self):
         return self.config["PathOfBuilding"]["Misc"]["decimalSeparator"]
 
-    def set_decimalSeparator(self, new_sep):
+    def _set_decimalSeparator(self, new_sep):
         self.config["PathOfBuilding"]["Misc"]["decimalSeparator"] = new_sep
 
-    def thousandsSeparator(self):
+    def _get_thousandsSeparator(self):
         return self.config["PathOfBuilding"]["Misc"]["thousandsSeparator"]
 
-    def set_thousandsSeparator(self, new_sep):
+    def _set_thousandsSeparator(self, new_sep):
         self.config["PathOfBuilding"]["Misc"]["thousandsSeparator"] = new_sep
 
-    def showThousandsSeparators(self):
+    def _get_showThousandsSeparators(self):
         return str2bool(
             self.config["PathOfBuilding"]["Misc"]["showThousandsSeparators"]
         )
 
-    def set_showThousandsSeparators(self, new_bool):
+    def _set_showThousandsSeparators(self, new_bool):
         self.config["PathOfBuilding"]["Misc"]["showThousandsSeparators"] = str(new_bool)
 
-    def defaultGemQuality(self):
+    def _get_defaultGemQuality(self):
         return self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"]
 
-    def set_defaultGemQuality(self, new_int):
+    def _set_defaultGemQuality(self, new_int):
         if new_int < 0 or new_int > 20:
             new_int = 0
         self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"] = format(
             "%d" % new_int
         )
 
-    def buildSortMode(self):
+    def _get_buildSortMode(self):
         return self.config["PathOfBuilding"]["Misc"]["buildSortMode"]
 
-    def set_buildSortMode(self, new_mode):
+    def _set_buildSortMode(self, new_mode):
         self.config["PathOfBuilding"]["Misc"]["buildSortMode"] = new_mode
 
-    def betaMode(self):
+    def _get_betaMode(self):
         return self.config["PathOfBuilding"]["Misc"]["betaMode"]
 
-    def set_betaMode(self, new_bool):
+    def _set_betaMode(self, new_bool):
         self.config["PathOfBuilding"]["Misc"]["betaMode"] = str(new_bool)
 
+    def _get_size(self):
+        try:
+            width = int(self.config["PathOfBuilding"]["size"]["width"])
+            height = int(self.config["PathOfBuilding"]["size"]["height"])
+        except KeyError:
+            width = 800
+            height = 600
+        return QSize(width, height)
+
+    def _set_size(self, new_size: QSize):
+        self.config["PathOfBuilding"]["size"] = {
+            "width": new_size.width(),
+            "height": new_size.height(),
+        }
+
+    theme = property(_get_theme, _set_theme)
+    slotOnlyTooltips = property(_get_slotOnlyTooltips, _set_slotOnlyTooltips)
+    showTitlebarName = property(_get_showTitlebarName, _set_showTitlebarName)
+    showWarnings = property(_get_showWarnings, _set_showWarnings)
+    defaultCharLevel = property(_get_defaultCharLevel, _set_showWarnings)
+    nodePowerTheme = property(_get_nodePowerTheme, _set_nodePowerTheme)
+    connectionProtocol = property(_get_connectionProtocol, _set_connectionProtocol)
+    decimalSeparator = property(_get_decimalSeparator, _set_decimalSeparator)
+    thousandsSeparator = property(_get_thousandsSeparator, _set_thousandsSeparator)
+    showThousandsSeparators = property(_get_showThousandsSeparators, _set_showThousandsSeparators)
+    defaultGemQuality = property(_get_defaultGemQuality, _set_defaultGemQuality)
+    buildSortMode = property(_get_buildSortMode, _set_buildSortMode)
+    betaMode = property(_get_betaMode, _set_betaMode)
+    size = property(_get_size, _set_size)
+
+    # these two are not properties
     def recent_builds(self):
         output = dict()
         try:
@@ -269,18 +303,3 @@ class Config:
                     "r{}".format(idx + 1)
                 ] = self.config["PathOfBuilding"]["recentBuilds"]["r{}".format(idx)]
             self.config["PathOfBuilding"]["recentBuilds"]["r0"] = filename
-
-    def size(self):
-        try:
-            width = int(self.config["PathOfBuilding"]["size"]["width"])
-            height = int(self.config["PathOfBuilding"]["size"]["height"])
-        except KeyError:
-            width = 800
-            height = 600
-        return QSize(width, height)
-
-    def set_size(self, new_size: QSize):
-        self.config["PathOfBuilding"]["size"] = {
-            "width": new_size.width(),
-            "height": new_size.height(),
-        }

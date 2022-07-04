@@ -32,7 +32,7 @@ from qdarktheme.widget_gallery.ui.frame_ui import FrameUI
 from qdarktheme.widget_gallery.ui.widgets_ui import WidgetsUI
 
 from pob_ui import PoBUI
-from pob_config import Config, color_codes, program_title
+from pob_config import Config, ColourCodes, program_title
 from build import Build
 
 _translate = QCoreApplication.translate
@@ -50,15 +50,14 @@ class MainWindow(QMainWindow):
         # Setup config
         self.config = Config(self, _app)
         self.config.win = self
-        self.config.read_config()
 
         atexit.register(self.exit_handler)
         self.setMinimumSize(QSize(800, 600))
         self.setWindowTitle(program_title)  # Do not translate
-        self.resize(self.config.size())
+        self.resize(self.config.size)
 
         self._ui = PoBUI(self, self.config)
-        self._ui.set_theme(self.config.theme())
+        self._ui.set_theme(self.config.theme)
 
         self.build = Build(self.config)
         self._ui.build = self.build
@@ -69,8 +68,10 @@ class MainWindow(QMainWindow):
         self._ui.action_open.triggered.connect(self._build_open)
 
     def exit_handler(self):
-        self.config.set_size(self.size())
-        self.config.write_config()
+        # self.config.set_size(self.size())
+        print(self.size())
+        self.config.size = self.size()
+        self.config.write()
         # Logic for checking we need to save and save if needed, goes here...
         # filePtr = open("edit.html", "w")
         # try:

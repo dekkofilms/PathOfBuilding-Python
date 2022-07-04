@@ -16,7 +16,7 @@ import os
 import tree
 import player
 import pob_file
-from pob_config import Config, color_codes, program_title
+from pob_config import Config, ColourCodes, program_title
 from tree import Tree
 
 default_build = {
