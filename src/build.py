@@ -57,10 +57,9 @@ default_build = {
 
 
 class Build:
-    def __init__(self, config: Config, name: str = "temp") -> None:
-        self.config = config
-        self.name = ""
-        self.set_build_name(name)
+    def __init__(self, _config: Config, __name: str = "New") -> None:
+        self.config = _config
+        self._name = __name
         # self.player = player.Player()
         self.filename = ""
         self.build = None
@@ -71,31 +70,38 @@ class Build:
 
     def __repr__(self) -> str:
         ret_str = f"[BUILD]: '{self.name}'\n"
-        ret_str += f"{self.tree}"
-        ret_str += f"{self.player}"
+        # ret_str += f"{self.tree}"
+        # ret_str += f"{self.player}"
         return ret_str
 
-    def set_build_name(self, new_name):
-        self.name = new_name
-        self.config.win.setWindowTitle("%s - %s" % (program_title, new_name))
+    @property
+    def name(self):
+        return self._name
 
-    def new_build(self):
+    @name.setter
+    def name(self, new_name):
+        self._name = new_name
+        print(f"{program_title} - {new_name}")
+        self.config.win.setWindowTitle(f"{program_title} - {new_name}")
+
+    def new(self):
         self.build = default_build
-        self.set_build_name("temp")
+        self.name = "New"
 
-    def load_build(self, filename):
-        name = "temp"
-        # print(filename)
+    def load(self, filename):
+        _name = "New"
+        print(filename)
         if os.path.exists(filename):
             self.build = pob_file.read_xml(filename)
         if self.build is None:
             # message box for failure
-            self.new_build()
+            self.new()
         else:
             self.filename = filename
-            name, ext = os.path.splitext(os.path.basename(filename))
-        self.set_build_name(name)
+            _name, ext = os.path.splitext(os.path.basename(filename))
+        print(_name)
+        self.name = _name
 
-    def save_build(self, filename):
+    def save(self, filename):
         self.filename = filename
         pob_file.write_xml(filename, self.build)

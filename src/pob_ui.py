@@ -3,6 +3,7 @@ Path of Building UI class
 
 Sets up and connects internal UI components
 """
+import sys
 import qdarktheme
 from qdarktheme.qtpy.QtCore import QSize, QDir, QRect, QRectF, Qt, Slot
 from qdarktheme.qtpy.QtGui import (
@@ -58,7 +59,10 @@ from qdarktheme.widget_gallery.ui.widgets_ui import WidgetsUI
 from pob_config import Config, ColourCodes
 from build import Build
 from tree import Tree
-import main_rc
+
+sys.path.append("rc")
+# rc file
+import PoB
 
 
 """
@@ -86,6 +90,7 @@ class TreeView(QGraphicsView):
     def has_photo(self):
         return not self._empty
 
+    # Inherited, don't change name
     def fitInView(self, scale=True, factor=None):
         rect = QRectF(self._photo.pixmap().rect())
         if not rect.isNull():
@@ -98,7 +103,7 @@ class TreeView(QGraphicsView):
                     self.scale(factor, factor)
             self._zoom = 0
 
-    def setPhoto(self, pixmap=None):
+    def set_photo(self, pixmap=None):
         self._zoom = 0
         if pixmap and not pixmap.isNull():
             self._empty = False
@@ -110,6 +115,7 @@ class TreeView(QGraphicsView):
             self._photo.setPixmap(QPixmap())
         self.fitInView()
 
+    # Inherited, don't change name
     def wheelEvent(self, event):
         if self.has_photo():
             if event.angleDelta().y() > 0:
@@ -162,7 +168,7 @@ class RightPane:
         size_policy2.setVerticalStretch(0)
         self.tabTree.setSizePolicy(size_policy2)
         self.tabTree.setFocusPolicy(Qt.TabFocus)
-        self.tabTree.setPhoto(
+        self.tabTree.set_photo(
             QPixmap("c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png")
         )
         # self.tabTree._photo.setPixmap(QPixmap(u":/Art/TreeData/ClassesRaider.png"))
@@ -469,8 +475,9 @@ class PoBUI:
         recents = config.recent_builds()
         idx = 0
         for value in recents.values():
-            if value != "-":
-                _action = self.menu_builds.addAction("&%d.%s" % (idx, value))
+            # if value != "":
+            if value is not None:
+                _action = self.menu_builds.addAction(f"&{idx}.{value}")
                 make_connection(value, idx)
                 idx += 1
 
@@ -483,7 +490,7 @@ class PoBUI:
         # action = self.menubar.sender()
         # print(type(action))
         # open the file using the filename in the build.
-        self.build.load_build(value)
+        self.build.load(value)
 
     def set_tab_focus(self, index):
         self.tab_focus.get(index).setFocus()

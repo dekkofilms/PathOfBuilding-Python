@@ -2,21 +2,23 @@
 Configuration Class
 
 Defines reading and writing the settings xml as well as the settings therein
+The variables that from thelua verion of Path of Building retain their current
+
+As the settings.xml can be altered by humans,care must be taken toensure data integrity, where possible
 
 This is a base PoB class. It doesn't import any other PoB ui classes
 Imports pob_file
-
 """
 
 import sys
 import os
+from pathlib import Path
 from collections import OrderedDict
 from enum import Enum
 
-from qdarktheme.qtpy.QtCore import QDir, QSize, Qt, Slot, QCoreApplication
+from qdarktheme.qtpy.QtCore import QSize
 
 import pob_file
-import enumerations
 
 program_title = "Path of Building"
 
@@ -37,14 +39,14 @@ default_config = {
             "defaultGemQuality": "0",
             "showThousandsSeparators": "true",
             "buildSortMode": "NAME",
-            "numRecentBuilds": "5"
+            "numRecentBuilds": "5",
         },
         "recentBuilds": {
-            "r0": "-",
-            "r1": "-",
-            "r2": "-",
-            "r3": "-",
-            "r4": "-",
+            "r0": "",
+            "r1": "",
+            "r2": "",
+            "r3": "",
+            "r4": "",
         },
     }
 }
@@ -126,10 +128,12 @@ class PlayerAscendancies(Enum):
     NONE = None
 
 
-# return a boolean from a string. As the settings could be manipulated by a human, we can't trust eval()
-#   EG: eval('os.system(`rm -rf /`)')
-# return True if it looks like it could be true, otherwise false
-def str2bool(in_str):
+def str_to_bool(in_str):
+    """
+    Return a boolean from a string. As the settings could be manipulated by a human, we can't trust eval()
+      EG: eval('os.system(`rm -rf /`)')
+    :returns: True if it looks like it could be true, otherwise false
+    """
     return in_str.lower() in ("yes", "true", "t", "1", "on")
 
 
@@ -138,7 +142,7 @@ class Config:
         # To reduce circular references, have the app and main window here
         self.win = _win
         self.app = _app
-        self.exeDir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        self.exeDir = Path.cwd()
         self.settingsFile = os.path.join(self.exeDir, "settings.xml")
         self.buildPath = os.path.join(self.exeDir, "builds")
         if not os.path.exists(self.buildPath):
@@ -146,140 +150,186 @@ class Config:
         self.tree_data_path = os.path.join(self.exeDir, "TreeData")
         if not os.path.exists(self.tree_data_path):
             os.makedirs(self.tree_data_path)
+        # self.exeDir = os.path.dirname(os.path.abspath(sys.argv[0]))
+        # self.settingsFile = os.path.join(self.exeDir, "settings.xml")
+        # self.buildPath = os.path.join(self.exeDir, "builds")
+        # if not os.path.exists(self.buildPath):
+        #     os.makedirs(self.buildPath)
+        # self.tree_data_path = os.path.join(self.exeDir, "TreeData")
+        # if not os.path.exists(self.tree_data_path):
+        #     os.makedirs(self.tree_data_path)
+        self.config = default_config
         self.read()
 
     def read(self):
+        """Set self.config with the contents of the settings file"""
         if os.path.exists(self.settingsFile):
             self.config = OrderedDict(pob_file.read_xml(self.settingsFile))
         if self.config is None:
             self.config = default_config
 
     def write(self):
+        """Write the settings file"""
         pob_file.write_xml(self.settingsFile, self.config)
 
-    def _get_theme(self):
+    @property
+    def theme(self):
         try:
             _theme = self.config["PathOfBuilding"]["Misc"]["theme"]
         except KeyError:
             _theme = "Dark"
+            self.config["PathOfBuilding"]["Misc"]["theme"] = _theme
         return _theme
 
-    def _set_theme(self, new_theme):
+    @theme.setter
+    def theme(self, new_theme):
         self.config["PathOfBuilding"]["Misc"]["theme"] = new_theme
 
-    def _get_slotOnlyTooltips(self):
-        return str2bool(self.config["PathOfBuilding"]["Misc"]["slotOnlyTooltips"])
+    @property
+    def slotOnlyTooltips(self):
+        return str_to_bool(self.config["PathOfBuilding"]["Misc"]["slotOnlyTooltips"])
 
-    def _set_slotOnlyTooltips(self, new_bool):
+    @slotOnlyTooltips.setter
+    def slotOnlyTooltips(self, new_bool):
         self.config["PathOfBuilding"]["Misc"]["slotOnlyTooltips"] = str(new_bool)
 
-    def _get_showTitlebarName(self):
-        return str2bool(self.config["PathOfBuilding"]["Misc"]["showTitlebarName"])
+    @property
+    def showTitlebarName(self):
+        return str_to_bool(self.config["PathOfBuilding"]["Misc"]["showTitlebarName"])
 
-    def _set_showTitlebarName(self, new_bool):
+    @showTitlebarName.setter
+    def showTitlebarName(self, new_bool):
         self.config["PathOfBuilding"]["Misc"]["showTitlebarName"] = str(new_bool)
 
-    def _get_showWarnings(self):
-        return str2bool(self.config["PathOfBuilding"]["Misc"]["showWarnings"])
+    @property
+    def showWarnings(self):
+        return str_to_bool(self.config["PathOfBuilding"]["Misc"]["showWarnings"])
 
-    def _set_showWarnings(self, new_bool):
+    @showWarnings.setter
+    def showWarnings(self, new_bool):
         self.config["PathOfBuilding"]["Misc"]["showWarnings"] = str(new_bool)
 
-    def _get_defaultCharLevel(self):
-        return int(self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"])
+    @property
+    def defaultCharLevel(self):
+        _defaultCharLevel = self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"]
+        if _defaultCharLevel < 1:
+            _defaultCharLevel = 1
+            self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"] = f"{_defaultCharLevel}"
+        if _defaultCharLevel > 100:
+            _defaultCharLevel = 100
+            self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"] = f"{_defaultCharLevel}"
+        return _defaultCharLevel
 
-    def _set_defaultCharLevel(self, new_int):
-        self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"] = format(
-            "%d" % new_int
-        )
+    @defaultCharLevel.setter
+    def defaultCharLevel(self, new_int):
+        self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"] = f"{new_int}"
 
-    def _get_nodePowerTheme(self):
+    @property
+    def nodePowerTheme(self):
         return self.config["PathOfBuilding"]["Misc"]["nodePowerTheme"]
 
-    def _set_nodePowerTheme(self, new_theme):
+    @nodePowerTheme.setter
+    def nodePowerTheme(self, new_theme):
         self.config["PathOfBuilding"]["Misc"]["nodePowerTheme"] = new_theme
 
-    def _get_connectionProtocol(self):
+    @property
+    def connectionProtocol(self):
         return self.config["PathOfBuilding"]["Misc"]["connectionProtocol"]
 
-    def _set_connectionProtocol(self, new_conn):
+    @connectionProtocol.setter
+    def connectionProtocol(self, new_conn):
         # what is this for
         self.config["PathOfBuilding"]["Misc"]["connectionProtocol"] = new_conn
 
-    def _get_decimalSeparator(self):
+    @property
+    def decimalSeparator(self):
         return self.config["PathOfBuilding"]["Misc"]["decimalSeparator"]
 
-    def _set_decimalSeparator(self, new_sep):
+    @decimalSeparator.setter
+    def decimalSeparator(self, new_sep):
         self.config["PathOfBuilding"]["Misc"]["decimalSeparator"] = new_sep
 
-    def _get_thousandsSeparator(self):
+    @property
+    def thousandsSeparator(self):
         return self.config["PathOfBuilding"]["Misc"]["thousandsSeparator"]
 
-    def _set_thousandsSeparator(self, new_sep):
+    @thousandsSeparator.setter
+    def thousandsSeparator(self, new_sep):
         self.config["PathOfBuilding"]["Misc"]["thousandsSeparator"] = new_sep
 
-    def _get_showThousandsSeparators(self):
-        return str2bool(
+    @property
+    def showThousandsSeparators(self):
+        return str_to_bool(
             self.config["PathOfBuilding"]["Misc"]["showThousandsSeparators"]
         )
 
-    def _set_showThousandsSeparators(self, new_bool):
+    @showThousandsSeparators.setter
+    def showThousandsSeparators(self, new_bool):
         self.config["PathOfBuilding"]["Misc"]["showThousandsSeparators"] = str(new_bool)
 
-    def _get_defaultGemQuality(self):
-        return self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"]
+    @property
+    def defaultGemQuality(self):
+        _defaultGemQuality = self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"]
+        if _defaultGemQuality < 0:
+            _defaultGemQuality = 0
+            self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"] = f"{_defaultGemQuality}"
+        if _defaultGemQuality > 20:
+            _defaultGemQuality= 0
+            self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"] = f"{_defaultGemQuality}"
+        return _defaultGemQuality
 
-    def _set_defaultGemQuality(self, new_int):
-        if new_int < 0 or new_int > 20:
-            new_int = 0
-        self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"] = format(
-            "%d" % new_int
-        )
+    @defaultGemQuality.setter
+    def defaultGemQuality(self, new_int):
+        self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"] = f"{new_int}"
 
-    def _get_buildSortMode(self):
+    @property
+    def buildSortMode(self):
         return self.config["PathOfBuilding"]["Misc"]["buildSortMode"]
 
-    def _set_buildSortMode(self, new_mode):
+    @buildSortMode.setter
+    def buildSortMode(self, new_mode):
         self.config["PathOfBuilding"]["Misc"]["buildSortMode"] = new_mode
 
-    def _get_betaMode(self):
+    @property
+    def betaMode(self):
         return self.config["PathOfBuilding"]["Misc"]["betaMode"]
 
-    def _set_betaMode(self, new_bool):
+    @betaMode.setter
+    def betaMode(self, new_bool):
         self.config["PathOfBuilding"]["Misc"]["betaMode"] = str(new_bool)
 
-    def _get_size(self):
+    @property
+    def size(self):
+        """
+        Return the window size as they were last written. This ensures the user has the same experience.
+        800 x 600 was chosen as it has been learn't with the lua version,
+          that some users in the world have small screen laptops
+        :returns: a QSize(width, height)
+        """
         try:
             width = int(self.config["PathOfBuilding"]["size"]["width"])
+            if width < 800:
+                width = 800
             height = int(self.config["PathOfBuilding"]["size"]["height"])
+            if height < 600:
+                height = 600
         except KeyError:
             width = 800
             height = 600
         return QSize(width, height)
 
-    def _set_size(self, new_size: QSize):
+    @size.setter
+    def size(self, new_size: QSize):
         self.config["PathOfBuilding"]["size"] = {
             "width": new_size.width(),
             "height": new_size.height(),
         }
 
-    theme = property(_get_theme, _set_theme)
-    slotOnlyTooltips = property(_get_slotOnlyTooltips, _set_slotOnlyTooltips)
-    showTitlebarName = property(_get_showTitlebarName, _set_showTitlebarName)
-    showWarnings = property(_get_showWarnings, _set_showWarnings)
-    defaultCharLevel = property(_get_defaultCharLevel, _set_showWarnings)
-    nodePowerTheme = property(_get_nodePowerTheme, _set_nodePowerTheme)
-    connectionProtocol = property(_get_connectionProtocol, _set_connectionProtocol)
-    decimalSeparator = property(_get_decimalSeparator, _set_decimalSeparator)
-    thousandsSeparator = property(_get_thousandsSeparator, _set_thousandsSeparator)
-    showThousandsSeparators = property(_get_showThousandsSeparators, _set_showThousandsSeparators)
-    defaultGemQuality = property(_get_defaultGemQuality, _set_defaultGemQuality)
-    buildSortMode = property(_get_buildSortMode, _set_buildSortMode)
-    betaMode = property(_get_betaMode, _set_betaMode)
-    size = property(_get_size, _set_size)
-
-    # these two are not properties
     def recent_builds(self):
+        """
+        Recent builds are a list of xml's that have been opened, to a maximum of 10 entries
+        :returns: an Ordered dictionary list of recent builds
+        """
         output = dict()
         try:
             output = self.config["PathOfBuilding"]["recentBuilds"]
@@ -296,9 +346,13 @@ class Config:
         return OrderedDict(output)
 
     def add_recent_build(self, filename):
+        """
+        Adds one build to the list of recent builds
+        :param filename: name of build xml
+        :returns: n/a
+        """
         if filename not in self.config["PathOfBuilding"]["recentBuilds"].values():
             for idx in [3, 2, 1, 0]:
-                print(idx)
                 self.config["PathOfBuilding"]["recentBuilds"][
                     "r{}".format(idx + 1)
                 ] = self.config["PathOfBuilding"]["recentBuilds"]["r{}".format(idx)]

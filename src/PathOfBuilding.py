@@ -1,16 +1,75 @@
+"""
+Path of Building main class
+
+Sets up and connects external components.
+External components are the status bar, toolbar (if exists), menus
+"""
+import sys  # Only needed for access to command line arguments
 import atexit
-import qdarktheme
-import sys
-from PySide6 import QtWidgets, QtCore
-from pob_config import Config, color_codes
 
-# pyside6-uic main.ui -o pob_ui.py
-from pob_main_ui import Ui_MainWindow
+from qdarktheme.qtpy.QtCore import QDir, QSize, Qt, Slot, QCoreApplication
+from qdarktheme.qtpy.QtGui import QAction, QActionGroup, QFont, QIcon
+from qdarktheme.qtpy.QtWidgets import (
+    QApplication,
+    QColorDialog,
+    QDialogButtonBox,
+    QFileDialog,
+    QFontDialog,
+    QLabel,
+    QMainWindow,
+    QMenuBar,
+    QMessageBox,
+    QSizePolicy,
+    QStackedWidget,
+    QStatusBar,
+    QToolBar,
+    QToolButton,
+    QWidget,
+)
+from qdarktheme.util import get_qdarktheme_root_path
+from qdarktheme.widget_gallery.ui.dock_ui import DockUI
+from qdarktheme.widget_gallery.ui.frame_ui import FrameUI
+from qdarktheme.widget_gallery.ui.widgets_ui import WidgetsUI
+
+from pob_ui import PoBUI
+from pob_config import Config, ColourCodes, program_title
+from build import Build
+
+_translate = QCoreApplication.translate
 
 
-class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
+"""
+MainWindow
+Owns and manages all the top level components. The bulk of the heavy lifting is done by the PoB_UI class
+"""
+
+
+class MainWindow(QMainWindow):
+    def __init__(self, _app) -> None:
+        super(MainWindow, self).__init__()
+        # Setup config
+        self.config = Config(self, _app)
+        self.config.win = self
+
+        atexit.register(self.exit_handler)
+        self.setMinimumSize(QSize(800, 600))
+        self.setWindowTitle(program_title)  # Do not translate
+        self.resize(self.config.size)
+
+        self._ui = PoBUI(self, self.config)
+        self._ui.set_theme(self.config.theme)
+
+        self.build = Build(self.config)
+        self._ui.build = self.build
+
+        # Connect actions
+        self._ui.actions_theme_dark_light.triggered.connect(self._change_theme)
+        self._ui.action_exit.triggered.connect(self._close_app)
+        self._ui.action_open.triggered.connect(self._build_open)
+
     def exit_handler(self):
-        self.config.write_config()
+        self.config.size = self.size()
+        self.config.write()
         # Logic for checking we need to save and save if needed, goes here...
         # filePtr = open("edit.html", "w")
         # try:
@@ -18,146 +77,54 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         # finally:
         #     filePtr.close()
 
-    def close_app(self):
+    @Slot()
+    def _close_app(self):
+        print("_close_app")
         self.close()
 
-    def build_open(self):
+    @Slot()
+    def _build_open(self):
+        print("_build_open")
         # Logic for checking we need to save and save if needed, goes here...
-        dialog = QtWidgets.QFileDialog(self)
-        dialog.setNameFilter("Builds (*.xml)")
-        dialog.setDirectory(self.config.buildPath)
-        if dialog.exec():
-            filename = dialog.selectedFiles()
-            print("filenames: %s" % filename)
+        # if build.needs_saving:
+        # if ui_utils.yes_no_dialog(app.tr("Save build"), app.tr("build name goes here"))
+        filename, selected_filter = QFileDialog.getOpenFileName(
+            self,
+            app.tr("Open a build"),
+            self.config.buildPath,
+            app.tr("Build Files (*.xml)"),
+        )
+        if filename != "":
             # open the file
+            self.build.load(filename)
+            if self.build.build is not None:
+                self.config.add_recent_build(
+                    filename.replace(self.config.buildPath, "")
+                )
 
-    def build_save_as(self):
-        # Logic for checking we need to save and save if needed, goes here...
-        dialog = QtWidgets.QFileDialog(self)
-        dialog.setNameFilter("Builds (*.xml)")
-        dialog.setDirectory(self.config.buildPath)
-        dialog.setDefaultSuffix("xml")
-        if dialog.exec():
-            filename = dialog.selectedFiles()
+    @Slot()
+    def _build_save_as(self):
+        filename, selected_filter = QFileDialog.getSaveFileName(
+            self,
+            app.tr("Save File"),
+            app.tr("Save build"),
+            self.config.buildPath,
+            app.tr("Build Files (*.xml)"),
+        )
+        if filename != "":
             print("filename: %s" % filename)
+            # print("selected_filter: %s" % selected_filter)
             # write the file
+            # build.save_build(filename)
 
-    def set_theme(self, _action):
-        action = self.sender()
-        text = action.whatsThis()
-        print(text)
-        if text == "":
-            app.setStyleSheet("")
-            app.setStyle("Fusion")
-        elif text == "light" or text == "dark":
-            app.setStyleSheet(qdarktheme.load_stylesheet(text))
-        else:
-            app.setStyle(text)
-
-    # don't use native signals/slot, so focus can be set back to edit box
-    def set_notes_font_size(self, size):
-        self.notes_text_edit.setFontPointSize(size)
-        self.notes_text_edit.setFocus()
-
-    # don't use native signals/slot, so focus can be set back to edit box
-    def set_notes_font_colour(self, colour_name):
-        if colour_name == "NORMAL":
-            self.notes_text_edit.setTextColor(self.defaultTextColour)
-        else:
-            self.notes_text_edit.setTextColor(color_codes[colour_name])
-        self.notes_text_edit.setFocus()
-
-    # don't use native signals/slot, so focus can be set back to edit box
-    def set_notes_font(self):
-        action = self.sender()
-        self.notes_text_edit.setCurrentFont(action.currentFont())
-        self.notes_text_edit.setFocus()
-
-    def build_notes_tab(self):
-        # notes_text_edit needs to be globally accessible
-        self.notes_text_edit = QtWidgets.QTextEdit(self.tabWidget)
-        self.notes_text_edit.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
-
-        widget = QtWidgets.QWidget()
-        layout = QtWidgets.QVBoxLayout(self.tabWidget)
-
-        font_layout = QtWidgets.QHBoxLayout()
-        font_layout.setObjectName("font_layout")
-        self.font_combo_box = QtWidgets.QFontComboBox()
-        self.font_combo_box.setObjectName("font_combo_box")
-        self.font_combo_box.setMinimumSize(QtCore.QSize(200, 0))
-        self.font_combo_box.editable = False
-        self.font_combo_box.setCurrentText("Times New Roman")
-        font_layout.addWidget(self.font_combo_box)
-        font_spin_box = QtWidgets.QSpinBox()
-        font_spin_box.setObjectName("spinBox")
-        font_spin_box.setMinimumSize(QtCore.QSize(35, 0))
-        font_spin_box.setMaximum(50)
-        font_spin_box.setMinimum(3)
-        font_spin_box.setValue(10)
-        font_layout.addWidget(font_spin_box)
-        self.colour_combo_box = QtWidgets.QComboBox()
-        self.colour_combo_box.setObjectName("colourComboBox")
-        self.colour_combo_box.setMinimumSize(QtCore.QSize(140, 0))
-        self.colour_combo_box.addItems(color_codes.keys())
-        font_layout.addWidget(self.colour_combo_box)
-        horizontal_spacer = QtWidgets.QSpacerItem(
-            88, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
-        font_layout.addItem(horizontal_spacer)
-        layout.addLayout(font_layout)
-
-        layout.addWidget(
-            self.notes_text_edit, 0, QtCore.Qt.AlignHCenter & QtCore.Qt.AlignVCenter
-        )
-        widget.setLayout(layout)
-        self.tabWidget.addTab(widget, "&Notes")
-
-        self.font_combo_box.currentFontChanged.connect(self.set_notes_font)  #
-        font_spin_box.valueChanged.connect(self.set_notes_font_size)  #
-        self.colour_combo_box.currentTextChanged.connect(self.set_notes_font_colour)  #
-        # tab indexes are 0 based
-        self.tab_focus = {
-            0: self.tabWidget,
-            1: self.tabWidget,
-            2: self.tabWidget,
-            3: self.notes_text_edit,
-        }
-        # build_notes_tab
-
-    def set_tab_focus(self, index):
-        self.tab_focus.get(index).setFocus()
-
-    def __init__(self) -> None:
-        super(MainWindow, self).__init__()
-        self.font_combo_box = None
-        self.colour_combo_box = None
-        self.tab_focus = None
-        self.notes_text_edit = None
-        self.setupUi(self)
-        self.config = Config(app, self)
-        self.config.read_config()
-        atexit.register(self.exit_handler)
-
-        # Now do all things that QT Designer can't do
-        self.actionExit.triggered.connect(self.close_app)
-        self.actionOpen.triggered.connect(self.build_open)
-        self.actionLight.triggered.connect(self.set_theme)
-        self.actionDark.triggered.connect(self.set_theme)
-        self.actionDarcula.triggered.connect(self.set_theme)
-        self.actionStandard.triggered.connect(self.set_theme)
-        self.tabWidget.currentChanged.connect(self.set_tab_focus)
-
-        # QT Designer can't add a layout as a tab
-        self.build_notes_tab()
-        self.defaultTextColour = self.notes_text_edit.textColor()
-        # print(self.notes_text_edit.textColor().getRgb())
-        # print(self.defaultTextColour)
+    @Slot()
+    def _change_theme(self) -> None:
+        self._ui.set_theme(self._ui.actions_theme_dark_light.text())
 
 
-app = QtWidgets.QApplication(sys.argv)
-# print(Config.theme())
-
-window = MainWindow()
-window.show()
-app.exec()
+if __name__ == "__main__":
+    app = QApplication([])
+    window = MainWindow(app)
+    window.menuBar().setNativeMenuBar(False)
+    window.show()
+    app.exec()
