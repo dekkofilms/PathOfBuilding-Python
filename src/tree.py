@@ -5,11 +5,13 @@ This class represents an instance of the Passive Tree for a given Build.
 Multiple Trees can exist in a single Build (at various progress levels;
 at different Jewel/Cluster itemizations, etc.)
 
-A Tree is tied to a Version of the Tree as released by GGG and thus older Trees
+A Tree instance is tied to a Version of the Tree as released by GGG and thus older Trees
 need to be supported for backwards compatibility reason.
 
 """
-import os, re
+import os, re, json
+import plucky
+from pathlib import Path
 from qdarktheme.qtpy.QtCore import (
     QSize,
     QDir,
@@ -64,7 +66,7 @@ from qdarktheme.qtpy.QtWidgets import (
     QWidget,
 )
 
-import pob_file, ui_utils, enumerations
+import pob_file, ui_utils
 from pob_config import Config, ColourCodes
 
 # from Build import Build
@@ -73,11 +75,12 @@ _VERSION_ = "3.18"
 
 
 class Tree:
-    def __init__(self, config: Config, version: str = _VERSION_) -> None:
+    def __init__(self, _config: Config, _version: str = _VERSION_) -> None:
         # declare variables that are set in subfunctions
-        self.version = None
-        self.tree_version_path = None
-        self.json_file_path = None
+        self.config = _config
+
+        self._version = _VERSION_
+        self.version = _version
         self.ui = None
         self.allocated_nodes = set()
         self.assets = dict()
@@ -85,34 +88,33 @@ class Tree:
         self.nodes = dict()
         self.skill_sprites = dict()
 
-        self.config = config
-        self.set_version(version)
-
         self.load()
 
-    def set_version(self, new_vers):
-        self.version = new_vers
-        self.tree_version_path = os.path.join(
+    @property
+    def version(self):
+        return self._version
+
+    @version.setter
+    def version(self, new_vers):
+        self._version = new_vers
+        self.tree_version_path = Path(
             self.config.tree_data_path, re.sub("\.", "_", new_vers)
         )
-        self.json_file_path = os.path.join(self.tree_version_path, "tree.json")
+        self.json_file_path = Path(self.tree_version_path, "tree.json")
 
     def load(self, vers=_VERSION_):
-        if os.path.exists(self.json_file_path):
+        if self.json_file_path.exists():
             json_dict = pob_file.read_json(self.json_file_path)
             if json_dict is None:
                 ui_utils.critical_dialog(
                     self.config.win,
-                    "{}: v{}".format(self.config.app.tr("Load Tree"), self.version),
-                    "{}:\n{}".format(
-                        self.config.app.tr("An error occurred to trying load"),
-                        self.json_file_path,
-                    ),
+                    "f{self.config.app.tr('Load Tree')}: v{self.version}",
+                    "f{self.config.app.tr('An error occurred to trying load')}:\n{self.json_file_path}",
                     self.config.app.tr("Close"),
                 )
             else:
                 # and now split the file into dicts
-                self.version = vers
+                version = vers
                 self.assets = json_dict["assets"]
                 self.classes = json_dict["classes"]
                 self.nodes = json_dict["nodes"]
@@ -120,26 +122,36 @@ class Tree:
                 # remap assets' contents into internal resource ids
                 for n_id in self.assets:
                     self.assets[n_id] = ":/Art/TreeData/" + n_id + ".png"
+
+                # -1 one as the dictionaries are 0 based indexes
+                num_zoom_levels = len(json_dict["imageZoomLevels"]) - 1
+
                 # remap skill_sprites' filename attribute to a valid runtime filename
                 for n_id in self.skill_sprites:
-                    filename = os.path.basename(
+                    # now remove all but the last one. currently this will be [0-2], leaving [3]
+                    # num_zoom_levels is at 3 and -1 is because we want to keep the last one.
+                    idx = num_zoom_levels - 1
+                    while idx >= 0:
+                        del self.skill_sprites[n_id][idx]
+                        idx -= 1
+
+                    # the one remaining file entry can now be indexed as 0
+                    filename = Path(
                         re.sub("(\?.*)$", "", self.skill_sprites[n_id][0]["filename"])
-                    )
-                    self.skill_sprites[n_id][0]["filename"] = os.path.join(
+                    ).name
+                    self.skill_sprites[n_id][0]["filename"] = Path(
                         self.tree_version_path, filename
                     )
-                # Can i enumurate classes, yes i can
+
+                # Can I enumurate classes, yes I can
                 # for idx in enumerations.PlayerClasses:
                 #     print(idx.value)
                 #     print(self.classes[idx.value])
         else:
             ui_utils.critical_dialog(
                 self.config.win,
-                "{}: v{}".format(self.config.app.tr("Load Tree"), self.version),
-                "{}:\n{}".format(
-                    self.config.app.tr("This file doesn't exist"),
-                    self.json_file_path,
-                ),
+                "f{self.config.app.tr('Load Tree')}: v{self.version}",
+                "{self.config.app.tr('This file doesn't exist')}:\n{self.json_file_path}",
                 self.config.app.tr("Close"),
             )
 

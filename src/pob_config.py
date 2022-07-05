@@ -10,8 +10,6 @@ This is a base PoB class. It doesn't import any other PoB ui classes
 Imports pob_file
 """
 
-import sys
-import os
 from pathlib import Path
 from collections import OrderedDict
 from enum import Enum
@@ -139,31 +137,24 @@ def str_to_bool(in_str):
 
 class Config:
     def __init__(self, _win, _app) -> None:
-        # To reduce circular references, have the app and main window here
+        # To reduce circular references, have the app and main window references here
         self.win = _win
         self.app = _app
+        self.config = None
+
         self.exeDir = Path.cwd()
-        self.settingsFile = os.path.join(self.exeDir, "settings.xml")
-        self.buildPath = os.path.join(self.exeDir, "builds")
-        if not os.path.exists(self.buildPath):
-            os.makedirs(self.buildPath)
-        self.tree_data_path = os.path.join(self.exeDir, "TreeData")
-        if not os.path.exists(self.tree_data_path):
-            os.makedirs(self.tree_data_path)
-        # self.exeDir = os.path.dirname(os.path.abspath(sys.argv[0]))
-        # self.settingsFile = os.path.join(self.exeDir, "settings.xml")
-        # self.buildPath = os.path.join(self.exeDir, "builds")
-        # if not os.path.exists(self.buildPath):
-        #     os.makedirs(self.buildPath)
-        # self.tree_data_path = os.path.join(self.exeDir, "TreeData")
-        # if not os.path.exists(self.tree_data_path):
-        #     os.makedirs(self.tree_data_path)
-        self.config = default_config
+        self.settingsFile = Path(self.exeDir, "settings.xml")
+        self.buildPath = Path(self.exeDir, "builds")
+        if not self.buildPath.exists():
+            self.buildPath.mkdir()
+        self.tree_data_path = Path(self.exeDir, "TreeData")
+        if not self.tree_data_path.exists():
+            self.tree_data_path.mkdir()
         self.read()
 
     def read(self):
         """Set self.config with the contents of the settings file"""
-        if os.path.exists(self.settingsFile):
+        if self.settingsFile.exists():
             self.config = OrderedDict(pob_file.read_xml(self.settingsFile))
         if self.config is None:
             self.config = default_config
@@ -210,6 +201,7 @@ class Config:
         self.config["PathOfBuilding"]["Misc"]["showWarnings"] = str(new_bool)
 
     @property
+    # fmt: off
     def defaultCharLevel(self):
         _defaultCharLevel = self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"]
         if _defaultCharLevel < 1:
@@ -219,6 +211,7 @@ class Config:
             _defaultCharLevel = 100
             self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"] = f"{_defaultCharLevel}"
         return _defaultCharLevel
+    # fmt: on
 
     @defaultCharLevel.setter
     def defaultCharLevel(self, new_int):
@@ -268,15 +261,17 @@ class Config:
         self.config["PathOfBuilding"]["Misc"]["showThousandsSeparators"] = str(new_bool)
 
     @property
+    # fmt: off
     def defaultGemQuality(self):
         _defaultGemQuality = self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"]
         if _defaultGemQuality < 0:
             _defaultGemQuality = 0
             self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"] = f"{_defaultGemQuality}"
         if _defaultGemQuality > 20:
-            _defaultGemQuality= 0
+            _defaultGemQuality = 0
             self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"] = f"{_defaultGemQuality}"
         return _defaultGemQuality
+    # fmt: on
 
     @defaultGemQuality.setter
     def defaultGemQuality(self, new_int):
@@ -348,12 +343,13 @@ class Config:
     def add_recent_build(self, filename):
         """
         Adds one build to the list of recent builds
-        :param filename: name of build xml
+        :param filename: str(): name of build xml
         :returns: n/a
         """
         if filename not in self.config["PathOfBuilding"]["recentBuilds"].values():
             for idx in [3, 2, 1, 0]:
-                self.config["PathOfBuilding"]["recentBuilds"][
-                    "r{}".format(idx + 1)
-                ] = self.config["PathOfBuilding"]["recentBuilds"]["r{}".format(idx)]
+                # fmt: off
+                self.config["PathOfBuilding"]["recentBuilds"][f"r{idx + 1}" ]\
+                    = self.config["PathOfBuilding"]["recentBuilds"][f"r{idx}"]
+                # fmt: on
             self.config["PathOfBuilding"]["recentBuilds"]["r0"] = filename

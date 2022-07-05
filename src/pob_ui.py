@@ -3,7 +3,8 @@ Path of Building UI class
 
 Sets up and connects internal UI components
 """
-import sys
+import sys, re
+from pathlib import Path
 import qdarktheme
 from qdarktheme.qtpy.QtCore import QSize, QDir, QRect, QRectF, Qt, Slot
 from qdarktheme.qtpy.QtGui import (
@@ -60,9 +61,8 @@ from pob_config import Config, ColourCodes
 from build import Build
 from tree import Tree
 
-sys.path.append("rc")
 # rc file
-import PoB
+import PoB_rc
 
 
 """
@@ -475,9 +475,11 @@ class PoBUI:
         recents = config.recent_builds()
         idx = 0
         for value in recents.values():
-            # if value != "":
             if value is not None:
-                _action = self.menu_builds.addAction(f"&{idx}.{value}")
+                fn = re.sub(
+                    ".xml", "", str(Path(value).relative_to(self.config.buildPath))
+                )
+                _action = self.menu_builds.addAction(f"&{idx}.  {fn}")
                 make_connection(value, idx)
                 idx += 1
 

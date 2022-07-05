@@ -10,13 +10,11 @@ numerous Passive Trees (at various Player Levels, or various Cluster Jewels)
 associated with a Player.
 """
 
-import sys
-import os
+from pathlib import Path
 
-import tree
-import player
-import pob_file
 from pob_config import Config, ColourCodes, program_title
+import pob_file
+import ui_utils
 from tree import Tree
 
 default_build = {
@@ -63,7 +61,7 @@ class Build:
         # self.player = player.Player()
         self.filename = ""
         self.build = None
-        # self.tree = Tree(self.config)
+        self.tree = Tree(self.config)
         self.trees = dict()
         self.ui = None
         self.need_saving = False
@@ -81,7 +79,6 @@ class Build:
     @name.setter
     def name(self, new_name):
         self._name = new_name
-        print(f"{program_title} - {new_name}")
         self.config.win.setWindowTitle(f"{program_title} - {new_name}")
 
     def new(self):
@@ -89,19 +86,46 @@ class Build:
         self.name = "New"
 
     def load(self, filename):
+        """
+        Load a build
+        :param filename: str() XML file to load
+        :return: N/A
+        """
         _name = "New"
-        print(filename)
-        if os.path.exists(filename):
-            self.build = pob_file.read_xml(filename)
+        self.build = pob_file.read_xml(filename)
         if self.build is None:
-            # message box for failure
+            ui_utils.critical_dialog(
+                self.config.win,
+                self.config.app.tr("Load Build"),
+                f"{self.config.app.tr('An error occurred to trying load')}:\n{filename}",
+                self.config.app.tr("Close"),
+            )
             self.new()
         else:
             self.filename = filename
-            _name, ext = os.path.splitext(os.path.basename(filename))
-        print(_name)
+            _name = Path(Path(filename).name).stem
         self.name = _name
 
-    def save(self, filename):
+    def save(self):
+        """
+        Save the build tothe filename recorded in the build Class
+        :return: N/A
+        """
+        pob_file.write_xml(self.filename, self.build)
+
+    def save_as(self, filename):
+        """
+        Save the build to a new name
+        :param filename:
+        :return: N/A
+        """
         self.filename = filename
         pob_file.write_xml(filename, self.build)
+
+    def ask_for_save_if_modified(self):
+        """
+        Check if the build has been modified and if so, prompt for saving.
+        :return: True if build saved
+        :return: False if build save was refused by the user
+        """
+        return True

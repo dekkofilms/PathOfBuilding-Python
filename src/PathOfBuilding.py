@@ -4,7 +4,6 @@ Path of Building main class
 Sets up and connects external components.
 External components are the status bar, toolbar (if exists), menus
 """
-import sys  # Only needed for access to command line arguments
 import atexit
 
 from qdarktheme.qtpy.QtCore import QDir, QSize, Qt, Slot, QCoreApplication
@@ -65,6 +64,7 @@ class MainWindow(QMainWindow):
         # Connect actions
         self._ui.actions_theme_dark_light.triggered.connect(self._change_theme)
         self._ui.action_exit.triggered.connect(self._close_app)
+        self._ui.action_new.triggered.connect(self._build_new)
         self._ui.action_open.triggered.connect(self._build_open)
 
     def exit_handler(self):
@@ -83,24 +83,30 @@ class MainWindow(QMainWindow):
         self.close()
 
     @Slot()
+    def _build_new(self):
+        # Logic for checking we need to save and save if needed, goes here...
+        # if build.needs_saving:
+        # if ui_utils.yes_no_dialog(app.tr("Save build"), app.tr("build name goes here"))
+        if self.build.build is not None:
+            if self.build.ask_for_save_if_modified():
+                self.build.new()
+
+    @Slot()
     def _build_open(self):
-        print("_build_open")
         # Logic for checking we need to save and save if needed, goes here...
         # if build.needs_saving:
         # if ui_utils.yes_no_dialog(app.tr("Save build"), app.tr("build name goes here"))
         filename, selected_filter = QFileDialog.getOpenFileName(
             self,
             app.tr("Open a build"),
-            self.config.buildPath,
-            app.tr("Build Files (*.xml)"),
+            str(self.config.buildPath),
+            f"{app.tr('Build Files')} (*.xml)",
         )
         if filename != "":
             # open the file
             self.build.load(filename)
             if self.build.build is not None:
-                self.config.add_recent_build(
-                    filename.replace(self.config.buildPath, "")
-                )
+                self.config.add_recent_build(filename)
 
     @Slot()
     def _build_save_as(self):
