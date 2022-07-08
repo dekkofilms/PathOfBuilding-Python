@@ -61,8 +61,7 @@ class Build:
         # self.player = player.Player()
         self.filename = ""
         self.build = None
-        self.tree = Tree(self.config)
-        self.trees = dict()
+        self.trees = {}
         self.ui = None
         self.need_saving = False
 

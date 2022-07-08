@@ -1,13 +1,17 @@
 """
 Tree Class
 
-This class represents an instance of the Passive Tree for a given Build.
-Multiple Trees can exist in a single Build (at various progress levels;
-at different Jewel/Cluster itemizations, etc.)
+This class represents an instance of the Passive Tree for **ONE** tree version.
+Multiple version of Trees can exist in a single Build (at various progress levels;
+at different Jewel/Cluster itemisations, etc.), so there could be multiple instantiations of this class
 
 A Tree instance is tied to a Version of the Tree as released by GGG and thus older Trees
 need to be supported for backwards compatibility reason.
 
+This holds in memory a copy of the tree data and doesn't know about any actively selected nodes.
+  That's the Build class' job.
+
+It is referenced by the TreeView class to display the tree
 """
 import os, re, json
 import plucky
@@ -67,28 +71,40 @@ from qdarktheme.qtpy.QtWidgets import (
 )
 
 import pob_file, ui_utils
-from pob_config import Config, ColourCodes
+from pob_config import Config, ColourCodes, PlayerClasses, _VERSION_
+from tree_graphics_item import TreeGraphicsItem
 
 # from Build import Build
-
-_VERSION_ = "3.18"
 
 
 class Tree:
     def __init__(self, _config: Config, _version: str = _VERSION_) -> None:
-        # declare variables that are set in subfunctions
+        # declare variables that are set in functions
         self.config = _config
 
-        self._version = _VERSION_
+        self._char_class = PlayerClasses.SCION  # can't use class here
         self.version = _version
         self.ui = None
         self.allocated_nodes = set()
-        self.assets = dict()
-        self.classes = dict()
-        self.nodes = dict()
-        self.skill_sprites = dict()
+        self.assets = {}
+        self.classes = {}
+        self.nodes = {}
+        self.skill_sprites = {}
+        self.min_x = 0
+        self.min_y = 0
+        self.max_x = 0
+        self.max_y = 0
 
         self.load()
+
+    @property
+    def char_class(self):
+        return self._char_class
+
+    @char_class.setter
+    def char_class(self, new_class):
+        self._char_class = new_class
+        # self.ui -> set class dropdown
 
     @property
     def version(self):
@@ -119,6 +135,10 @@ class Tree:
                 self.classes = json_dict["classes"]
                 self.nodes = json_dict["nodes"]
                 self.skill_sprites = json_dict["skillSprites"]
+                self.min_x = json_dict["min_x"]
+                self.min_y = json_dict["min_y"]
+                self.max_x = json_dict["max_x"]
+                self.max_y = json_dict["max_y"]
                 # remap assets' contents into internal resource ids
                 for n_id in self.assets:
                     self.assets[n_id] = ":/Art/TreeData/" + n_id + ".png"
@@ -128,12 +148,10 @@ class Tree:
 
                 # remap skill_sprites' filename attribute to a valid runtime filename
                 for n_id in self.skill_sprites:
-                    # now remove all but the last one. currently this will be [0-2], leaving [3]
-                    # num_zoom_levels is at 3 and -1 is because we want to keep the last one.
-                    idx = num_zoom_levels - 1
-                    while idx >= 0:
+                    # Now remove all but the last one, currently this will be [0-2], leaving [3]
+                    # num_zoom_levels is at 3 and -1 is because we want to keep the highest resolution.
+                    for idx in range(num_zoom_levels - 1, -1, -1):
                         del self.skill_sprites[n_id][idx]
-                        idx -= 1
 
                     # the one remaining file entry can now be indexed as 0
                     filename = Path(
@@ -143,7 +161,7 @@ class Tree:
                         self.tree_version_path, filename
                     )
 
-                # Can I enumurate classes, yes I can
+                # Can I enumerate classes, yes I can
                 # for idx in enumerations.PlayerClasses:
                 #     print(idx.value)
                 #     print(self.classes[idx.value])

@@ -27,6 +27,7 @@ from qdarktheme.qtpy.QtWidgets import (
     QFontDialog,
     QFormLayout,
     QFrame,
+    QGraphicsLineItem,
     QGraphicsPixmapItem,
     QGraphicsScene,
     QGraphicsView,
@@ -57,9 +58,11 @@ from qdarktheme.widget_gallery.ui.dock_ui import DockUI
 from qdarktheme.widget_gallery.ui.frame_ui import FrameUI
 from qdarktheme.widget_gallery.ui.widgets_ui import WidgetsUI
 
-from pob_config import Config, ColourCodes
+from pob_config import Config, ColourCodes, _VERSION_
 from build import Build
 from tree import Tree
+from tree_view import TreeView
+from tree_graphics_item import TreeGraphicsItem
 
 # rc file
 import PoB_rc
@@ -71,79 +74,6 @@ TreeView
 """
 
 
-class TreeView(QGraphicsView):
-    def __init__(self):
-        super(TreeView, self).__init__()
-        self._zoom = 0
-        self._empty = True
-        self._scene = QGraphicsScene(self)
-        self._photo = QGraphicsPixmapItem()
-        self._scene.addItem(self._photo)
-        self.setScene(self._scene)
-        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
-        self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
-        self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.setFrameShape(QFrame.NoFrame)
-        self.setRenderHints(QPainter.Antialiasing | QPainter.SmoothPixmapTransform)
-
-    def has_photo(self):
-        return not self._empty
-
-    # Inherited, don't change name
-    def fitInView(self, scale=True, factor=None):
-        rect = QRectF(self._photo.pixmap().rect())
-        if not rect.isNull():
-            self.setSceneRect(rect)
-            if self.has_photo():
-                unity = self.transform().mapRect(QRectF(0, 0, 1, 1))
-                if factor is None:
-                    self.scale(1 / unity.width(), 1 / unity.height())
-                else:
-                    self.scale(factor, factor)
-            self._zoom = 0
-
-    def set_photo(self, pixmap=None):
-        self._zoom = 0
-        if pixmap and not pixmap.isNull():
-            self._empty = False
-            # self.setDragMode(QGraphicsView.ScrollHandDrag)
-            self._photo.setPixmap(pixmap)
-        else:
-            self._empty = True
-            self.setDragMode(QGraphicsView.NoDrag)
-            self._photo.setPixmap(QPixmap())
-        self.fitInView()
-
-    # Inherited, don't change name
-    def wheelEvent(self, event):
-        if self.has_photo():
-            if event.angleDelta().y() > 0:
-                factor = 1.25
-                self._zoom += 1
-            else:
-                factor = 0.8
-                self._zoom -= 1
-            if self._zoom == 0:
-                self.fitInView()
-            else:
-                self.scale(factor, factor)
-            t = self.transform()
-            # print(t.m11())
-            # print(t.m22())
-
-    # def toggleDragMode(self):
-    #     if self.dragMode() == QGraphicsView.ScrollHandDrag:
-    #         self.setDragMode(QGraphicsView.NoDrag)
-    #     elif not self._photo.pixmap().isNull():
-    #         self.setDragMode(QGraphicsView.ScrollHandDrag)
-    #
-    # def mousePressEvent(self, event):
-    #     if self._photo.isUnderMouse():
-    #         self.photoClicked.emit(self.mapToScene(event.pos()).toPoint())
-    #     super(TreeView, self).mousePressEvent(event)
-
-
 """
 RightPane
 Class for holding components to display the right side of the vertical splitter 
@@ -153,13 +83,17 @@ Class for holding components to display the right side of the vertical splitter
 class RightPane:
     """The ui class of dock window."""
 
-    def __init__(self, win: QTabWidget, config: Config) -> None:
+    def __init__(self, win: QTabWidget, _config: Config) -> None:
         super().__init__()
         """Set up ui."""
 
+        self.config = _config
+
         ############################################
         # Tree tab
-        self.tabTree = TreeView()
+        self.tree = {_VERSION_: Tree(self.config)}
+        # self.tabTree = TreeView()
+        self.tabTree = TreeView(self.config, self.tree[_VERSION_])
 
         # need the layout to make the label follow window size changes
         self.horizontalLayout_2 = QHBoxLayout(self.tabTree)
@@ -168,12 +102,11 @@ class RightPane:
         size_policy2.setVerticalStretch(0)
         self.tabTree.setSizePolicy(size_policy2)
         self.tabTree.setFocusPolicy(Qt.TabFocus)
-        self.tabTree.set_photo(
-            QPixmap("c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png")
-        )
-        # self.tabTree._photo.setPixmap(QPixmap(u":/Art/TreeData/ClassesRaider.png"))
-        self.tabTree.fitInView(False, 0.5)
-        self.tabTree.tree = Tree(config)
+        self.tabTree.add_picture("c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png", 10, 10, 1)
+        # self.tabTree.set_picture(QPixmap(u":/Art/TreeData/ClassesRaider.png"))
+        self.tabTree.add_picture(u":/Art/TreeData/ClassesRaider.png", -1000, -1000)
+        self.tabTree.add_picture(u":/Art/TreeData/ClassesRaider.png", -10, -10)
+        # self.tabTree.fitInView(False, 0.5)
 
         win.addTab(self.tabTree, "&Tree")
 
@@ -328,6 +261,7 @@ class PoBUI:
         self.config = config
         self._theme = "dark"
         self._border_radius = "rounded"
+        # self.tree = {_VERSION_: Tree(self.config)}
 
         # ######################  STATUS BAR  ######################
         statusbar = QStatusBar(main_win)
@@ -411,8 +345,6 @@ class PoBUI:
         container = QWidget()
         self.frame = QFrame(h_splitter_1)
         self.left_pane = LeftPane(self.frame, config)
-        # container.setObjectName("Build Info")
-        # self.left_pane = LeftPane(container)
         size_policy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         size_policy.setHorizontalStretch(1)
         size_policy.setVerticalStretch(0)

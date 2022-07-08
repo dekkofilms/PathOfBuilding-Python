@@ -34,8 +34,6 @@ from pob_ui import PoBUI
 from pob_config import Config, ColourCodes, program_title
 from build import Build
 
-_translate = QCoreApplication.translate
-
 
 """
 MainWindow
