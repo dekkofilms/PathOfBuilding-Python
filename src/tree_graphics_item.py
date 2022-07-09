@@ -105,39 +105,41 @@ class TreeGraphicsItem(QGraphicsPixmapItem):
         self.setAcceptTouchEvents(True)
         self.setAcceptHoverEvents(True)
         self.setZValue(z_value)
-        self.setToolTip(_image)
-
+        self.filename = _image
 
         self.config = _config
         self.data = _image
 
         # turn all those data's into properties
 
+    # Inherited, don't change definition
     def paint(self, painter, option, widget):
         # print(option)
         # print(option.state)
         # option.state = option.state and not QStyle.State_Selected
         super(TreeGraphicsItem, self).paint(painter, option, widget)
 
-    # not sure if this is needed
-    # def hoverEnterEvent(self, event):
+    def hoverEnterEvent(self, event):
+        # this will be text associated with the node
+        self.setToolTip(self.filename)
+
     #     pass
 
     # not sure if this is needed
     # def hoverLeaveEvent(self, event):
     #     pass
 
-    # Inherited, don't change name
+    # Inherited, don't change definition
     def mousePressEvent(self, event) -> None:
-        print("TreeGraphicsItem.mousePressEvent")
+        # print("TreeGraphicsItem.mousePressEvent")
         # AltModifier (altKey), ControlModifier(crtlKey)
         # pprint(event)
         # self.setCursor(Qt.ClosedHandCursor)
         event.setAccepted(True)
 
-    # Inherited, don't change name
+    # Inherited, don't change definition
     def mouseReleaseEvent(self, event) -> None:
-        print("TreeGraphicsItem.mouseReleaseEvent")
+        # print("TreeGraphicsItem.mouseReleaseEvent")
         # AltModifier (altKey), ControlModifier(crtlKey)
         pprint(event)
         # self.setCursor(Qt.OpenHandCursor)

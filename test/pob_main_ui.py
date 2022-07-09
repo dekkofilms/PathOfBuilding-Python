@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (QApplication, QComboBox, QFormLayout, QFrame,
     QStatusBar, QTabWidget, QToolBar, QWidget)
 import PoB_rc
 
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():

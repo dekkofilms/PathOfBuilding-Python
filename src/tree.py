@@ -82,20 +82,31 @@ class Tree:
         # declare variables that are set in functions
         self.config = _config
 
-        self._char_class = PlayerClasses.SCION  # can't use class here
+        # self._char_class = PlayerClasses.SCION  # can't use class here
+        self._char_class = PlayerClasses.MARAUDER  # can't use class here
         self.version = _version
         self.ui = None
         self.allocated_nodes = set()
         self.assets = {}
         self.classes = {}
+        self.groups = {}
         self.nodes = {}
         self.skill_sprites = {}
         self.min_x = 0
         self.min_y = 0
         self.max_x = 0
         self.max_y = 0
+        self.graphics_items = []
 
         self.load()
+
+    def add_picture(self, pixmap, x, y, z=0):
+        # if pixmap and not pixmap.isNull():
+        image = TreeGraphicsItem(self.config, pixmap, z)
+        image.setPos(x, y)
+        image.setZValue(z)
+        self.graphics_items.append(image)
+
 
     @property
     def char_class(self):
@@ -114,7 +125,7 @@ class Tree:
     def version(self, new_vers):
         self._version = new_vers
         self.tree_version_path = Path(
-            self.config.tree_data_path, re.sub("\.", "_", new_vers)
+            self.config.tree_data_path, re.sub("\.", "_", str(new_vers))
         )
         self.json_file_path = Path(self.tree_version_path, "tree.json")
 
@@ -130,15 +141,31 @@ class Tree:
                 )
             else:
                 # and now split the file into dicts
-                version = vers
+                self._version = vers
                 self.assets = json_dict["assets"]
                 self.classes = json_dict["classes"]
+                self.groups = json_dict["groups"]
                 self.nodes = json_dict["nodes"]
                 self.skill_sprites = json_dict["skillSprites"]
                 self.min_x = json_dict["min_x"]
                 self.min_y = json_dict["min_y"]
                 self.max_x = json_dict["max_x"]
                 self.max_y = json_dict["max_y"]
+
+                if self._version >= 3.10:
+                    # Migrate groups to old format
+                    for g in self.groups:
+                        group = self.groups[g]
+                        group["n"] = group["nodes"]
+                        group["oo"] = {}
+                        for orbit in group["orbits"]:
+                            group["oo"][orbit] = True
+
+                # for n in self.nodes:
+                #     # Migrate nodes to new format
+                #     if self._version < 3.10:
+
+
                 # remap assets' contents into internal resource ids
                 for n_id in self.assets:
                     self.assets[n_id] = ":/Art/TreeData/" + n_id + ".png"

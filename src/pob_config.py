@@ -125,7 +125,7 @@ class PlayerClasses(Enum):
 class PlayerAscendancies(Enum):
     NONE = None
 
-_VERSION_ = "3.18"
+_VERSION_ = 3.18
 
 def str_to_bool(in_str):
     """
