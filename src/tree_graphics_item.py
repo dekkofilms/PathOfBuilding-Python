@@ -96,27 +96,31 @@ Example data
 
 
 class TreeGraphicsItem(QGraphicsPixmapItem):
-    # def __init__(self, _config: Config, z_value=0, _data: dict, rect=QRectF, parent=None, scene=None) -> None:
-    # def __init__(self, _config: Config, pixmap, parent=None, scene=None) -> None:
-    def __init__(self, _config: Config, _image: str, z_value=0, parent=None, scene=None) -> None:
+    def __init__(
+        self,
+        _config: Config,
+        _image_name: str,
+        z_value=0,
+        selectable=True,
+        parent=None,
+        scene=None,
+    ) -> None:
         super(TreeGraphicsItem, self).__init__()
-        self.setPixmap(QPixmap(_image))
-        self.setFlag(QGraphicsItem.ItemIsSelectable, True)
-        self.setAcceptTouchEvents(True)
-        self.setAcceptHoverEvents(True)
-        self.setZValue(z_value)
-        self.filename = _image
-
         self.config = _config
-        self.data = _image
+        self.setPixmap(QPixmap(_image_name))
+        self.setZValue(z_value)
+        self.filename = _image_name
+        self.data = _image_name
 
-        # turn all those data's into properties
+        self.setFlag(QGraphicsItem.ItemIsSelectable, selectable)
+        self.setAcceptTouchEvents(selectable)
+        self.setAcceptHoverEvents(True)
+        # self.setAcceptHoverEvents(selectable)
+
+        # turn all those data's into properties ?
 
     # Inherited, don't change definition
     def paint(self, painter, option, widget):
-        # print(option)
-        # print(option.state)
-        # option.state = option.state and not QStyle.State_Selected
         super(TreeGraphicsItem, self).paint(painter, option, widget)
 
     def hoverEnterEvent(self, event):
@@ -131,16 +135,16 @@ class TreeGraphicsItem(QGraphicsPixmapItem):
 
     # Inherited, don't change definition
     def mousePressEvent(self, event) -> None:
-        # print("TreeGraphicsItem.mousePressEvent")
+        print("TreeGraphicsItem.mousePressEvent")
         # AltModifier (altKey), ControlModifier(crtlKey)
         # pprint(event)
         # self.setCursor(Qt.ClosedHandCursor)
-        event.setAccepted(True)
+        event.accept()
 
     # Inherited, don't change definition
     def mouseReleaseEvent(self, event) -> None:
-        # print("TreeGraphicsItem.mouseReleaseEvent")
+        print("TreeGraphicsItem.mouseReleaseEvent")
         # AltModifier (altKey), ControlModifier(crtlKey)
-        pprint(event)
+        # pprint(event)
         # self.setCursor(Qt.OpenHandCursor)
-        event.setAccepted(True)
+        event.accept()

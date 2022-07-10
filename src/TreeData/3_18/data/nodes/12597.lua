@@ -1,0 +1,170 @@
+<1>{
+  __index = <table 1>,
+  alternative = {},
+  angle = 0,
+  ascendancyName = "Ascendant",
+  conquered = false,
+  dn = "Occultist",
+  g = 34,
+  group = {
+    ascendancyName = "Ascendant",
+    n = <2>{ "12597" },
+    nodes = <table 2>,
+    oo = {
+      [0] = true
+    },
+    orbits = { 0 },
+    x = -7568,
+    y = 6745.28
+  },
+  icon = "Art/2DArt/SkillIcons/passives/Ascendants/Occultist.png",
+  id = 12597,
+  in = { "51782" },
+  isMultipleChoiceOption = true,
+  linkedId = { 51782 },
+  modKey = "[1 = EnemyCurseLimit|BASE|-|-|-][10 = CurseEffect|INC|-|-|-][1.5 = EnergyShieldRegenPercent|BASE|-|-|-][100 = AvoidStun|BASE|-|-|type=Condition/var=HaveEnergyShield]",
+  modList = <3>{ <4>{
+      flags = 0,
+      keywordFlags = 0,
+      name = "EnemyCurseLimit",
+      source = "Tree:12597",
+      type = "BASE",
+      value = 1
+    }, <5>{
+      flags = 0,
+      keywordFlags = 0,
+      name = "CurseEffect",
+      source = "Tree:12597",
+      type = "INC",
+      value = 10
+    }, <6>{
+      flags = 0,
+      keywordFlags = 0,
+      name = "EnergyShieldRegenPercent",
+      source = "Tree:12597",
+      type = "BASE",
+      value = 1.5
+    }, <7>{ {
+        type = "Condition",
+        var = "HaveEnergyShield"
+      },
+      flags = 0,
+      keywordFlags = 0,
+      name = "AvoidStun",
+      source = "Tree:12597",
+      type = "BASE",
+      value = 100
+    },
+    ModStore = <8>{
+      __call = <function 1>,
+      __index = <function 2>,
+      __newindex = <table 3>,
+      <metatable> = <table 8>
+    },
+    Object = <table 3>,
+    _parentInit = {
+      [<9>{
+        Combine = <function 3>,
+        CopyList = <function 4>,
+        EvalMod = <function 5>,
+        Flag = <function 6>,
+        GetCondition = <function 7>,
+        GetMultiplier = <function 8>,
+        GetStat = <function 9>,
+        HasMod = <function 10>,
+        List = <function 11>,
+        Max = <function 12>,
+        More = <function 13>,
+        NewMod = <function 14>,
+        Override = <function 15>,
+        ReplaceMod = <function 16>,
+        ScaleAddList = <function 17>,
+        ScaleAddMod = <function 18>,
+        Sum = <function 19>,
+        Tabulate = <function 20>,
+        __call = <function 21>,
+        __index = <table 9>,
+        _className = "ModStore",
+        _constructor = <function 22>
+      }] = true
+    },
+    actor = {},
+    conditions = {},
+    multipliers = {},
+    parent = false,
+    <metatable> = <10>{
+      AddList = <function 23>,
+      AddMod = <function 24>,
+      FlagInternal = <function 25>,
+      ListInternal = <function 26>,
+      MergeMod = <function 27>,
+      MergeNewMod = <function 28>,
+      MoreInternal = <function 29>,
+      NewMod = <function 14>,
+      OverrideInternal = <function 30>,
+      Print = <function 31>,
+      ReplaceModInternal = <function 32>,
+      SumInternal = <function 33>,
+      TabulateInternal = <function 34>,
+      __call = <function 35>,
+      __index = <table 10>,
+      _className = "ModList",
+      _constructor = <function 36>,
+      _parents = { <table 9> },
+      _superParents = {
+        [<table 9>] = true
+      },
+      <metatable> = {
+        __index = <function 37>
+      }
+    }
+  },
+  mods = { {
+      list = { <table 4> }
+    }, {
+      list = { <table 5> }
+    }, {
+      list = { <table 6> }
+    }, {
+      list = { <table 7> }
+    } },
+  name = "Occultist",
+  o = 0,
+  oidx = 0,
+  orbit = 0,
+  orbitIndex = 0,
+  out = {},
+  overlay = {
+    alloc = "PSSkillFrameActive",
+    allocAscend = "AscendancyFrameSmallAllocated",
+    artWidth = 40,
+    path = "PSSkillFrameHighlighted",
+    pathAscend = "AscendancyFrameSmallCanAllocate",
+    rsq = 2830.24,
+    size = 53.2,
+    unalloc = "PSSkillFrame",
+    unallocAscend = "AscendancyFrameSmallNormal"
+  },
+  passivePointsGranted = 0,
+  reminderText = { "(You can only take one of the three Witch Ascendancy passives)" },
+  rsq = 2830.24,
+  sd = <11>{ "You can apply an additional Curse", "10% increased Effect of your Curses", "Regenerate 1.5% of Energy Shield per second", "Cannot Be Stunned while you have Energy Shield" },
+  size = 53.2,
+  skill = 12597,
+  sprites = {
+    normalActive = { 0.3475935828877, 0, 0.36497326203209, 0.030232558139535,
+      handle = <userdata 1>,
+      height = 26,
+      width = 26
+    },
+    normalInactive = { 0.3475935828877, 0, 0.36497326203209, 0.030232558139535,
+      handle = <userdata 2>,
+      height = 26,
+      width = 26
+    }
+  },
+  stats = <table 11>,
+  type = "Normal",
+  x = -7568,
+  y = 6745.28
+}

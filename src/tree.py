@@ -14,7 +14,8 @@ This holds in memory a copy of the tree data and doesn't know about any actively
 It is referenced by the TreeView class to display the tree
 """
 import os, re, json
-import plucky
+from pprint import pprint
+from plucky import pluck, plucks, pluckable, merge
 from pathlib import Path
 from qdarktheme.qtpy.QtCore import (
     QSize,
@@ -96,9 +97,16 @@ class Tree:
         self.min_y = 0
         self.max_x = 0
         self.max_y = 0
+        self.size = QRect(self.min_x, self.min_y, self.max_x, self.max_y)
         self.graphics_items = []
+        self.total_points = 0
+        self.ascendancy_points = 8
 
         self.load()
+
+    def __repr__(self) -> str:
+        ret_str = f"[TREE]: version '{self.version}'\n"
+        return ret_str
 
     def add_picture(self, pixmap, x, y, z=0):
         # if pixmap and not pixmap.isNull():
@@ -106,7 +114,6 @@ class Tree:
         image.setPos(x, y)
         image.setZValue(z)
         self.graphics_items.append(image)
-
 
     @property
     def char_class(self):
@@ -140,17 +147,19 @@ class Tree:
                     self.config.app.tr("Close"),
                 )
             else:
-                # and now split the file into dicts
                 self._version = vers
+                self.min_x = json_dict["min_x"]
+                self.min_y = json_dict["min_y"]
+                self.max_x = json_dict["max_x"]
+                self.max_y = json_dict["max_y"]
+                self.total_points = json_dict["points"]["totalPoints"]
+                self.ascendancy_points = json_dict["points"]["ascendancyPoints"]
+                # and now split the file into dicts
                 self.assets = json_dict["assets"]
                 self.classes = json_dict["classes"]
                 self.groups = json_dict["groups"]
                 self.nodes = json_dict["nodes"]
                 self.skill_sprites = json_dict["skillSprites"]
-                self.min_x = json_dict["min_x"]
-                self.min_y = json_dict["min_y"]
-                self.max_x = json_dict["max_x"]
-                self.max_y = json_dict["max_y"]
 
                 if self._version >= 3.10:
                     # Migrate groups to old format
@@ -160,11 +169,59 @@ class Tree:
                         group["oo"] = {}
                         for orbit in group["orbits"]:
                             group["oo"][orbit] = True
+                    del self.nodes["root"]
 
-                # for n in self.nodes:
-                #     # Migrate nodes to new format
-                #     if self._version < 3.10:
+                for n in self.nodes:
+                    node = self.nodes[n]
+                    # if self._version < 3.10:
+                    #    Migrate nodes to new format
+                    #    node.classStartIndex = node.spc[0] and node.spc[0]
+                    # else:
+                    # To old format
+                    if self._version >= 3.10:
+                        node["dn"] = node["name"]
+                        node["id"] = node.pop("skill")
+                        node["sd"] = node.pop("stats")
+                        if "group" in node:
+                            node["g"] = node.pop("group")
+                        if "orbit" in node:
+                            node["o"] = node.pop("orbit")
+                        if "orbitIndex" in node:
+                            node["oidx"] = node.pop("orbitIndex")
+                        # if "passivePointsGranted" not in node:
+                        node["passivePointsGranted"] = node.get(
+                            "passivePointsGranted", 0
+                        )
 
+                    # Find the node's group
+                    try:
+                        """
+                        local group = self.groups[node.g]
+                        if group then
+                            node.group = group
+                            group.ascendancyName = node.ascendancyName
+                            if node.isAscendancyStart then
+                                group.isAscendancyStart = true
+                            end
+                        """
+                        if "g" in node:
+                            group_num = str(node["g"])
+                            group = self.groups.get(group_num, None)
+                            if self.groups is not None:
+                                node["group"] = group
+                                if "ascendancyName" in node:
+                                    group["ascendancyName"] = node["ascendancyName"]
+                                if "isAscendancyStart" in node:
+                                    group["isAscendancyStart"] = node[
+                                        "isAscendancyStart"
+                                    ]
+                                # else:
+                                #     node["isAscendancyStart"] = False
+                                #     group["isAscendancyStart"] = False
+                        # elseif node.type == "Notable" or node.type == "Keystone" then
+                        #    self.clusterNodeMap[node.dn] = node
+                    except KeyError:
+                        print("2. Node group error")
 
                 # remap assets' contents into internal resource ids
                 for n_id in self.assets:
@@ -192,6 +249,8 @@ class Tree:
                 # for idx in enumerations.PlayerClasses:
                 #     print(idx.value)
                 #     print(self.classes[idx.value])
+
+            # if self.json_file_path.exists():
         else:
             ui_utils.critical_dialog(
                 self.config.win,
@@ -199,10 +258,7 @@ class Tree:
                 "{self.config.app.tr('This file doesn't exist')}:\n{self.json_file_path}",
                 self.config.app.tr("Close"),
             )
-
-    def __repr__(self) -> str:
-        ret_str = f"[TREE]: version '{self.version}'\n"
-        return ret_str
+        # load
 
 
 # def test(config: Config) -> None:

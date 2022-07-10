@@ -77,7 +77,6 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def _close_app(self):
-        print("_close_app")
         self.close()
 
     @Slot()

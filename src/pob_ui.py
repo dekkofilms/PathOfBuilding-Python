@@ -92,7 +92,8 @@ class RightPane:
         ############################################
         # Tree tab
         self.tree = {_VERSION_: Tree(self.config)}
-        self.tabTree = TreeView(self.config, self.tree[_VERSION_])
+        self.current_tree = self.tree[_VERSION_]
+        self.tabTree = TreeView(self.config, self.current_tree)
 
         # need the layout to make the label follow window size changes
         self.horizontalLayout_2 = QHBoxLayout(self.tabTree)
@@ -102,9 +103,9 @@ class RightPane:
         self.tabTree.setSizePolicy(size_policy2)
         self.tabTree.setFocusPolicy(Qt.TabFocus)
         # self.tabTree.add_picture("c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png", 10, 10, 1)
-        # self.tabTree.set_picture(QPixmap(u":/Art/TreeData/ClassesRaider.png"))
         # self.tabTree.add_picture(u":/Art/TreeData/ClassesRaider.png", -1000, -1000)
-        # self.tabTree.add_picture(u":/Art/TreeData/ClassesRaider.png", -10, -10)
+        self.tabTree.add_picture(":/Art/TreeData/ClassesRaider.png", -10, -10)
+        # self.tabTree.fitInView(self.current_tree.size)
         # self.tabTree.fitInView(False, 0.5)
 
         win.addTab(self.tabTree, "&Tree")

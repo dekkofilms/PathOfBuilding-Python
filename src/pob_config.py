@@ -122,10 +122,23 @@ class PlayerClasses(Enum):
     SHADOW = 6
 
 
+player_class_backgrounds = {
+    PlayerClasses.SCION: {"n": "", "x": 0, "y": 0},
+    PlayerClasses.MARAUDER: {"n": "BackgroundStr", "x": -2750, "y": 1600},
+    PlayerClasses.RANGER: {"n": "BackgroundDex", "x": 2550, "y": 1600},
+    PlayerClasses.WITCH: {"n": "BackgroundInt", "x": -250, "y": -2200},
+    PlayerClasses.DUELIST: {"n": "BackgroundStrDex", "x": -150, "y": 2350},
+    PlayerClasses.TEMPLAR: {"n": "BackgroundStrInt", "x": -2100, "y": -1500},
+    PlayerClasses.SHADOW: {"n": "BackgroundDexInt", "x": 2350, "y": -1950},
+}
+
+
 class PlayerAscendancies(Enum):
     NONE = None
 
+
 _VERSION_ = 3.18
+
 
 def str_to_bool(in_str):
     """
