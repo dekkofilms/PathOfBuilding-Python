@@ -82,10 +82,10 @@ class Tree:
     def __init__(self, _config: Config, _version: str = _VERSION_) -> None:
         # declare variables that are set in functions
         self.config = _config
+        self.version = _version
 
         # self._char_class = PlayerClasses.SCION  # can't use class here
         self._char_class = PlayerClasses.MARAUDER  # can't use class here
-        self.version = _version
         self.ui = None
         self.allocated_nodes = set()
         self.assets = {}
@@ -244,11 +244,6 @@ class Tree:
                     self.skill_sprites[n_id][0]["filename"] = Path(
                         self.tree_version_path, filename
                     )
-
-                # Can I enumerate classes, yes I can
-                # for idx in enumerations.PlayerClasses:
-                #     print(idx.value)
-                #     print(self.classes[idx.value])
 
             # if self.json_file_path.exists():
         else:

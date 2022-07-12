@@ -6,7 +6,7 @@ External components are the status bar, toolbar (if exists), menus
 """
 import atexit
 
-from qdarktheme.qtpy.QtCore import QDir, QSize, Qt, Slot, QCoreApplication
+from qdarktheme.qtpy.QtCore import QDir, QSize, Qt, Slot, QCoreApplication, QEvent
 from qdarktheme.qtpy.QtGui import QAction, QActionGroup, QFont, QIcon
 from qdarktheme.qtpy.QtWidgets import (
     QApplication,
@@ -47,6 +47,7 @@ class MainWindow(QMainWindow):
         # Setup config
         self.config = Config(self, _app)
         self.config.win = self
+        self.startPos = None
 
         atexit.register(self.exit_handler)
         self.setMinimumSize(QSize(800, 600))
@@ -64,6 +65,21 @@ class MainWindow(QMainWindow):
         self._ui.action_exit.triggered.connect(self._close_app)
         self._ui.action_new.triggered.connect(self._build_new)
         self._ui.action_open.triggered.connect(self._build_open)
+
+    # Inherited, don't change definition
+    def eventFilter(self, source, event):
+        print(f"eventFilter: ")
+        if (event.type() == QEvent.MouseButtonPress and
+                event.button() == Qt.MiddleButton):
+            self.startPos = event.pos()
+            return True
+        elif event.type() == QEvent.MouseMove and self.startPos is not None:
+            self.move(self.pos() + event.pos() - self.startPos)
+            return True
+        elif event.type() == QEvent.MouseButtonRelease and self.startPos is not None:
+            self.startPos = None
+            return True
+        return super(MainWindow, self).eventFilter(source, event)
 
     def exit_handler(self):
         self.config.size = self.size()

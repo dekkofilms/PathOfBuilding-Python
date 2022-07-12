@@ -5,8 +5,9 @@ Sets up and connects internal UI components
 """
 import sys, re
 from pathlib import Path
+from pprint import pprint
 import qdarktheme
-from qdarktheme.qtpy.QtCore import QSize, QDir, QRect, QRectF, Qt, Slot
+from qdarktheme.qtpy.QtCore import QSize, QDir, QRect, QRectF, Qt, Slot, QEvent
 from qdarktheme.qtpy.QtGui import (
     QAction,
     QActionGroup,
@@ -58,7 +59,7 @@ from qdarktheme.widget_gallery.ui.dock_ui import DockUI
 from qdarktheme.widget_gallery.ui.frame_ui import FrameUI
 from qdarktheme.widget_gallery.ui.widgets_ui import WidgetsUI
 
-from pob_config import Config, ColourCodes, _VERSION_
+from pob_config import Config, ColourCodes, _VERSION_, PlayerClasses
 from build import Build
 from tree import Tree
 from tree_view import TreeView
@@ -66,12 +67,6 @@ from tree_graphics_item import TreeGraphicsItem
 
 # rc file
 import PoB_rc
-
-
-"""
-TreeView
-    Class for displaying and manipulating the Passive tree  
-"""
 
 
 """
@@ -124,6 +119,7 @@ class RightPane:
         # Notes tab
         self.notes_text_edit = QTextEdit()
         self.notes_text_edit.setLineWrapMode(QTextEdit.NoWrap)
+        # Ths is the default colour a Text Editor comes with. use it when the user selects "Normal"
         self.defaultTextColour = self.notes_text_edit.textColor()
 
         self.nt_widget = QWidget()
@@ -147,8 +143,9 @@ class RightPane:
         self.colour_combo_box = QComboBox(self.nt_widget)
         self.colour_combo_box.setObjectName("colourComboBox")
         self.colour_combo_box.setMinimumSize(QSize(140, 0))
+        self.colour_combo_box.setDuplicatesEnabled(False)
         # self.colour_combo_box.addItems(color_codes.keys())
-        self.colour_combo_box.addItems([colour.name for colour in ColourCodes])
+        self.colour_combo_box.addItems([colour.name.title() for colour in ColourCodes])
         self.font_layout.addWidget(self.colour_combo_box)
         self.horizontal_spacer = QSpacerItem(
             88, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
@@ -230,7 +227,7 @@ class LeftPane:
 
         minor_god_label = QLabel(win)
         self.formLayout.setWidget(2, QFormLayout.LabelRole, minor_god_label)
-        minor_god_label.setText("minor Gods:")
+        minor_god_label.setText("Minor Gods:")
         self.minor_god_comboBox = QComboBox(win)
         self.minor_god_comboBox.addItem("Nothing", "None")
         self.minor_god_comboBox.addItem("Soul of Gruthkul", "Gruthkul")
@@ -242,7 +239,7 @@ class LeftPane:
         self.minor_god_comboBox.addItem("Soul of Ryslatha", "Ryslatha")
         self.minor_god_comboBox.addItem("Soul of Shakari", "Shakari")
         self.minor_god_comboBox.setPlaceholderText(
-            self.config.app.tr("Make  a Selection")
+            self.config.app.tr("Make a Selection")
         )
         # set the ComboBox dropdown width.
         self.minor_god_comboBox.view().setMinimumWidth(
@@ -261,6 +258,7 @@ class PoBUI:
         self.config = config
         self._theme = "dark"
         self._border_radius = "rounded"
+        self._curr_class = PlayerClasses.SCION
         # self.tree = {_VERSION_: Tree(self.config)}
 
         # ######################  STATUS BAR  ######################
@@ -309,10 +307,9 @@ class PoBUI:
         self.toolBar.addAction(self.action_new)
         self.toolBar.addAction(self.action_open)
         self.toolBar.addAction(self.action_save)
-        spacer = QWidget()
-        spacer.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Minimum)
-        spacer.setMinimumSize(100, 0)
-        self.toolBar.addWidget(spacer)
+        spacer1 = QWidget()
+        spacer1.setMinimumSize(200, 0)
+        self.toolBar.addWidget(spacer1)
         self.points_label = QLabel()
         self.points_label.setMinimumSize(100, 0)
         self.points_label.setText(" 0 / 123  0 / 8 ")
@@ -325,6 +322,22 @@ class PoBUI:
         self.level_spinbox.setMinimum(1)
         self.level_spinbox.setMaximum(100)
         self.toolBar.addWidget(self.level_spinbox)
+        self.classes_combobox = QComboBox()
+        self.classes_combobox.setMinimumSize(100, 0)
+        self.classes_combobox.setDuplicatesEnabled(False)
+        # model().sort(1)
+        self.classes_combobox.setInsertPolicy(QComboBox.InsertAlphabetically)
+        for idx in PlayerClasses:
+            self.classes_combobox.addItem(idx.name.title(), idx.value)
+        spacer2 = QWidget()
+        spacer2.setMinimumSize(50, 0)
+        self.toolBar.addWidget(spacer2)
+        self.toolBar.addWidget(self.classes_combobox)
+        self.ascendancy_combobox = QComboBox()
+        self.ascendancy_combobox.setMinimumSize(100, 0)
+        self.ascendancy_combobox.setDuplicatesEnabled(False)
+        self.ascendancy_combobox.addItem("None", "None")
+        self.toolBar.addWidget(self.ascendancy_combobox)
 
         # Options Menu Actions
         menu_options = self.menubar.addMenu("&Options")
@@ -342,24 +355,16 @@ class PoBUI:
         h_splitter_1.setMinimumHeight(350)  # Fix bug layout crush
 
         # Layout
+        # Join Left and Right panes together
         container = QWidget()
         self.frame = QFrame(h_splitter_1)
         self.left_pane = LeftPane(self.frame, config)
         size_policy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         size_policy.setHorizontalStretch(1)
         size_policy.setVerticalStretch(0)
-        # self.frame.setSizePolicy(size_policy)
-        # self.frame.setMinimumSize(QSize(180, 600))
-        # self.frame.setMaximumSize(QSize(400, 0))
-        # self.frame.setSizeIncrement(QSize(10, 0))
-        # self.frame.setBaseSize(QSize(200, 0))
-        # self.frame.setFrameShape(QFrame.StyledPanel)
-        # self.frame.setFrameShadow(QFrame.Raised)
-
-        # container.setSizePolicy(size_policy)
-        # container.setMinimumSize(QSize(180, 600))
-        # container.setMaximumSize(QSize(400, 0))
-        # h_splitter_1.addWidget(container)
+        self.frame.setSizePolicy(size_policy)
+        self.frame.setMinimumSize(QSize(280, 600))
+        self.frame.setMaximumSize(QSize(400, 4000))
 
         self.tabs = QTabWidget()
         self.right_pane = RightPane(self.tabs, config)
@@ -370,14 +375,18 @@ class PoBUI:
 
         self.tabs.currentChanged.connect(self.set_tab_focus)
 
+        # ToolBar actions
+        self.ascendancy_combobox.currentTextChanged.connect(self.change_ascendancy)
+        self.classes_combobox.currentTextChanged.connect(self.change_class)
+
         # Notes Tab Actions
         self.right_pane.font_combo_box.currentFontChanged.connect(
             self.set_notes_font
-        )  #
-        self.right_pane.font_spin_box.valueChanged.connect(self.set_notes_font_size)  #
+        )
+        self.right_pane.font_spin_box.valueChanged.connect(self.set_notes_font_size)
         self.right_pane.colour_combo_box.currentTextChanged.connect(
             self.set_notes_font_colour
-        )  #
+        )
         # tab indexes are 0 based
         self.tab_focus = {
             0: self.right_pane.tabTree,
@@ -394,26 +403,91 @@ class PoBUI:
         self.tabs.setFocus()
         # setup_ui
 
-    # Setup menu entries for all valid recent builds in the settings file
-    def set_recent_builds_menu_items(self, config: Config):
+    # don't use native signals/slot, so focus can be set back to edit box
+    @Slot()
+    def set_notes_font_size(self, size):
+        """
+        Actions required for changing the TextEdit font size. Ensure that the TextEdit gets the focus back.
+        :return: N/A
+        """
+        # print("set_notes_font_size")
+        # print(type(self).__name__)
+        self.right_pane.notes_text_edit.setFontPointSize(size)
+        self.right_pane.notes_text_edit.setFocus()
 
-        # Lambdas in python share the variable scope they're created in
-        # so make function containing just the lambda
-        def make_connection(v, i):
-            _action.triggered.connect(
-                lambda checked: self._open_previous_build(checked, v, i)
-            )
+    # don't use native signals/slot, so focus can be set back to edit box
+    @Slot()
+    def set_notes_font(self):
+        """
+        Actions required for changing the TextEdit font. Ensure that the TextEdit gets the focus back.
+        :return: N/A
+        """
+        self.right_pane.notes_text_edit.setCurrentFont(
+            self.right_pane.font_combo_box.currentFont()
+        )
+        self.right_pane.notes_text_edit.setFocus()
 
-        recents = config.recent_builds()
-        idx = 0
-        for value in recents.values():
-            if value is not None:
-                fn = re.sub(
-                    ".xml", "", str(Path(value).relative_to(self.config.buildPath))
-                )
-                _action = self.menu_builds.addAction(f"&{idx}.  {fn}")
-                make_connection(value, idx)
-                idx += 1
+    # don't use native signals/slot, so focus can be set back to edit box
+    @Slot()
+    def set_notes_font_colour(self, colour_name):
+        """
+        Actions required for changing TextEdit font colour. Ensure that the TextEdit gets the focus back
+        :param colour_name: String of the selected text
+        :return: N/A
+        """
+        if colour_name == "Normal":
+            self.right_pane.notes_text_edit.setTextColor(self.right_pane.defaultTextColour)
+        else:
+            self.right_pane.notes_text_edit.setTextColor(ColourCodes[colour_name.upper()].value)
+        self.right_pane.notes_text_edit.setFocus()
+
+    @property
+    def curr_class(self):
+        return self._curr_class
+
+    @curr_class.setter
+    def curr_class(self, new_class):
+        """
+        Actions required for changing classes
+        :param new_class: Integer representing the PlayerClasses enumerations
+        :return:
+        """
+        # GUI Changes
+        _class = self.right_pane.current_tree.classes[new_class]
+        # Changing the ascendancy combobox, will trigger it's signal/slot.
+        # This is good as it will set the ascendancy back to None
+        self.ascendancy_combobox.clear()
+        self.ascendancy_combobox.addItem("None", "None")
+        for _ascendancy in _class["ascendancies"]:
+            self.ascendancy_combobox.addItem(_ascendancy["name"])
+        # build changes
+        self._curr_class = new_class
+        self.build.curr_class = new_class
+
+    @Slot()
+    def change_class(self, selected_class):
+        """
+        Slot for the Classes combobox
+        :param selected_class: String of the selected text
+        :return:
+        """
+        self.curr_class = self.classes_combobox.currentData()
+
+    @Slot()
+    def change_ascendancy(self, selected_ascendancy):
+        """
+        Actions required for changing ascendancies
+        :param selected_ascendancy: String of the selected text
+        :return:
+        """
+        # "" will occur during a combobox clear
+        if selected_ascendancy == "":
+            return
+        # "None" will occur when refilling the combobox or when the user chooses it
+        if selected_ascendancy == "None":
+            print(f"change_ascendancy: {selected_ascendancy}")
+        else:
+            print(f"change_ascendancy: {selected_ascendancy}")
 
     # Open a previous build as shown on the Build Menu
     @Slot()
@@ -443,34 +517,25 @@ class PoBUI:
             qdarktheme.load_stylesheet(self._theme, self._border_radius)
         )
 
-    # don't use native signals/slot, so focus can be set back to edit box
-    @Slot()
-    def set_notes_font_size(self, size):
-        # print("set_notes_font_size")
-        # print(type(self).__name__)
-        self.right_pane.notes_text_edit.setFontPointSize(size)
-        self.right_pane.notes_text_edit.setFocus()
+    # Setup menu entries for all valid recent builds in the settings file
+    def set_recent_builds_menu_items(self, config: Config):
 
-    # don't use native signals/slot, so focus can be set back to edit box
-    @Slot()
-    def set_notes_font_colour(self, colour_name):
-        # print("set_notes_font_colour")
-        # print(type(self).__name__)
-        if colour_name == "NORMAL":
-            self.right_pane.notes_text_edit.setTextColor(self.defaultTextColour)
-        else:
-            self.right_pane.notes_text_edit.setTextColor(ColourCodes[colour_name].value)
-        self.right_pane.notes_text_edit.setFocus()
+        # Lambdas in python share the variable scope they're created in
+        # so make function containing just the lambda
+        def make_connection(v, i):
+            _action.triggered.connect(
+                lambda checked: self._open_previous_build(checked, v, i)
+            )
 
-    # don't use native signals/slot, so focus can be set back to edit box
-    @Slot()
-    def set_notes_font(self):
-        # print("set_notes_font")
-        # print(type(self).__name__)
-        # action = self.sender()
-        self.right_pane.notes_text_edit.setCurrentFont(
-            self.right_pane.font_combo_box.currentFont()
-        )
-        self.right_pane.notes_text_edit.setFocus()
+        recents = config.recent_builds()
+        idx = 0
+        for value in recents.values():
+            if value is not None and value != "":
+                fn = re.sub(
+                    ".xml", "", str(Path(value).relative_to(self.config.buildPath))
+                )
+                _action = self.menu_builds.addAction(f"&{idx}.  {fn}")
+                make_connection(value, idx)
+                idx += 1
 
     # PoBUI

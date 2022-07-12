@@ -164,12 +164,18 @@ class Config:
         self.tree_data_path = Path(self.exeDir, "TreeData")
         if not self.tree_data_path.exists():
             self.tree_data_path.mkdir()
+        self.misc = {}
         self.read()
 
     def read(self):
         """Set self.config with the contents of the settings file"""
         if self.settingsFile.exists():
-            self.config = OrderedDict(pob_file.read_xml(self.settingsFile))
+            # try:
+                self.config = OrderedDict(pob_file.read_xml(self.settingsFile))
+                self.misc = self.config["PathOfBuilding"]["Misc"]
+                print(self.misc)
+            # except:
+            #     self.config = None
         if self.config is None:
             self.config = default_config
 
@@ -179,133 +185,126 @@ class Config:
 
     @property
     def theme(self):
-        try:
-            _theme = self.config["PathOfBuilding"]["Misc"]["theme"]
-        except KeyError:
-            _theme = "Dark"
-            self.config["PathOfBuilding"]["Misc"]["theme"] = _theme
-        return _theme
+        return self.misc.get("theme", "Dark")
 
     @theme.setter
     def theme(self, new_theme):
-        self.config["PathOfBuilding"]["Misc"]["theme"] = new_theme
+        self.misc["theme"] = new_theme
 
     @property
     def slotOnlyTooltips(self):
-        return str_to_bool(self.config["PathOfBuilding"]["Misc"]["slotOnlyTooltips"])
+        return str_to_bool(self.misc.get("slotOnlyTooltips", True))
 
     @slotOnlyTooltips.setter
     def slotOnlyTooltips(self, new_bool):
-        self.config["PathOfBuilding"]["Misc"]["slotOnlyTooltips"] = str(new_bool)
+        self.misc["slotOnlyTooltips"] = str(new_bool)
 
     @property
     def showTitlebarName(self):
-        return str_to_bool(self.config["PathOfBuilding"]["Misc"]["showTitlebarName"])
+        return str_to_bool(self.misc.get("showTitlebarName", True))
 
     @showTitlebarName.setter
     def showTitlebarName(self, new_bool):
-        self.config["PathOfBuilding"]["Misc"]["showTitlebarName"] = str(new_bool)
+        self.misc["showTitlebarName"] = str(new_bool)
 
     @property
     def showWarnings(self):
-        return str_to_bool(self.config["PathOfBuilding"]["Misc"]["showWarnings"])
+        return str_to_bool(self.misc.get("showWarnings", True))
 
     @showWarnings.setter
     def showWarnings(self, new_bool):
-        self.config["PathOfBuilding"]["Misc"]["showWarnings"] = str(new_bool)
+        self.misc["showWarnings"] = str(new_bool)
 
     @property
     # fmt: off
     def defaultCharLevel(self):
-        _defaultCharLevel = self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"]
+        _defaultCharLevel = self.misc.get("defaultCharLevel", 1)
         if _defaultCharLevel < 1:
             _defaultCharLevel = 1
-            self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"] = f"{_defaultCharLevel}"
+            self.misc["defaultCharLevel"] = f"{_defaultCharLevel}"
         if _defaultCharLevel > 100:
             _defaultCharLevel = 100
-            self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"] = f"{_defaultCharLevel}"
+            self.misc["defaultCharLevel"] = f"{_defaultCharLevel}"
         return _defaultCharLevel
     # fmt: on
 
     @defaultCharLevel.setter
     def defaultCharLevel(self, new_int):
-        self.config["PathOfBuilding"]["Misc"]["defaultCharLevel"] = f"{new_int}"
+        self.misc["defaultCharLevel"] = f"{new_int}"
 
     @property
     def nodePowerTheme(self):
-        return self.config["PathOfBuilding"]["Misc"]["nodePowerTheme"]
+        return self.misc.get("nodePowerTheme", "RED/BLUE")
 
     @nodePowerTheme.setter
     def nodePowerTheme(self, new_theme):
-        self.config["PathOfBuilding"]["Misc"]["nodePowerTheme"] = new_theme
+        self.misc["nodePowerTheme"] = new_theme
 
     @property
     def connectionProtocol(self):
-        return self.config["PathOfBuilding"]["Misc"]["connectionProtocol"]
+        return self.misc.get("connectionProtocol", "nil")
 
     @connectionProtocol.setter
     def connectionProtocol(self, new_conn):
         # what is this for
-        self.config["PathOfBuilding"]["Misc"]["connectionProtocol"] = new_conn
+        self.misc["connectionProtocol"] = new_conn
 
     @property
     def decimalSeparator(self):
-        return self.config["PathOfBuilding"]["Misc"]["decimalSeparator"]
+        return self.misc.get("decimalSeparator", ".")
 
     @decimalSeparator.setter
     def decimalSeparator(self, new_sep):
-        self.config["PathOfBuilding"]["Misc"]["decimalSeparator"] = new_sep
+        self.misc["decimalSeparator"] = new_sep
 
     @property
     def thousandsSeparator(self):
-        return self.config["PathOfBuilding"]["Misc"]["thousandsSeparator"]
+        return self.misc.get("thousandsSeparator", ",")
 
     @thousandsSeparator.setter
     def thousandsSeparator(self, new_sep):
-        self.config["PathOfBuilding"]["Misc"]["thousandsSeparator"] = new_sep
+        self.misc["thousandsSeparator"] = new_sep
 
     @property
     def showThousandsSeparators(self):
-        return str_to_bool(
-            self.config["PathOfBuilding"]["Misc"]["showThousandsSeparators"]
-        )
+        return str_to_bool(self.misc.get("showThousandsSeparators", True))
 
     @showThousandsSeparators.setter
     def showThousandsSeparators(self, new_bool):
-        self.config["PathOfBuilding"]["Misc"]["showThousandsSeparators"] = str(new_bool)
+        self.misc["showThousandsSeparators"] = str(new_bool)
 
     @property
     # fmt: off
     def defaultGemQuality(self):
-        _defaultGemQuality = self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"]
+        _defaultGemQuality = self.misc.get("defaultGemQuality", 1)
         if _defaultGemQuality < 0:
             _defaultGemQuality = 0
-            self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"] = f"{_defaultGemQuality}"
+            self.misc["defaultGemQuality"] = f"{_defaultGemQuality}"
         if _defaultGemQuality > 20:
             _defaultGemQuality = 0
-            self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"] = f"{_defaultGemQuality}"
+            self.misc["defaultGemQuality"] = f"{_defaultGemQuality}"
         return _defaultGemQuality
     # fmt: on
 
     @defaultGemQuality.setter
     def defaultGemQuality(self, new_int):
-        self.config["PathOfBuilding"]["Misc"]["defaultGemQuality"] = f"{new_int}"
+        self.misc["defaultGemQuality"] = f"{new_int}"
 
     @property
     def buildSortMode(self):
-        return self.config["PathOfBuilding"]["Misc"]["buildSortMode"]
+        return self.misc.get("buildSortMode", "NAME")
 
     @buildSortMode.setter
     def buildSortMode(self, new_mode):
-        self.config["PathOfBuilding"]["Misc"]["buildSortMode"] = new_mode
+        self.misc["buildSortMode"] = new_mode
 
     @property
     def betaMode(self):
-        return self.config["PathOfBuilding"]["Misc"]["betaMode"]
+        return str_to_bool(self.misc.get("betaMode", False))
 
     @betaMode.setter
     def betaMode(self, new_bool):
-        self.config["PathOfBuilding"]["Misc"]["betaMode"] = str(new_bool)
+        self.misc["betaMode"] = str(new_bool)
 
     @property
     def size(self):
