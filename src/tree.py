@@ -17,63 +17,12 @@ import os, re, json
 from pprint import pprint
 from plucky import pluck, plucks, pluckable, merge
 from pathlib import Path
-from qdarktheme.qtpy.QtCore import (
-    QSize,
-    QDir,
-    QRect,
-    QRectF,
-    Qt,
-    Slot,
-    QCoreApplication,
-)
-from qdarktheme.qtpy.QtGui import (
-    QAction,
-    QActionGroup,
-    QFont,
-    QIcon,
-    QPixmap,
-    QBrush,
-    QColor,
-    QPainter,
-)
-from qdarktheme.qtpy.QtWidgets import (
-    QApplication,
-    QColorDialog,
-    QComboBox,
-    QDockWidget,
-    QFileDialog,
-    QFontComboBox,
-    QFontDialog,
-    QFormLayout,
-    QFrame,
-    QGraphicsPixmapItem,
-    QGraphicsScene,
-    QGraphicsView,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QMainWindow,
-    QMenuBar,
-    QMessageBox,
-    QScrollArea,
-    QSizePolicy,
-    QSpacerItem,
-    QSpinBox,
-    QSplitter,
-    QStackedWidget,
-    QStatusBar,
-    QTabWidget,
-    QTextEdit,
-    QToolBar,
-    QToolBox,
-    QToolButton,
-    QVBoxLayout,
-    QWidget,
-)
+from qdarktheme.qtpy.QtCore import QRect
 
 import pob_file, ui_utils
-from pob_config import Config, ColourCodes, PlayerClasses, _VERSION_
+from pob_config import Config, ColourCodes, PlayerClasses, _VERSION_, class_centres
 from tree_graphics_item import TreeGraphicsItem
+from node import Node
 
 # from Build import Build
 
@@ -101,6 +50,16 @@ class Tree:
         self.graphics_items = []
         self.total_points = 0
         self.ascendancy_points = 8
+        self.skillsPerOrbit = {}
+        self.orbitRadii = {}
+        self.orbitAnglesByOrbit = {}
+
+        self.ascendancyMap = {}
+        self.clusterNodeMap = {}
+        self.keystoneMap = {}
+        self.masteryEffects = {}
+        self.notableMap = {}
+        self.sockets = {}
 
         self.load()
 
@@ -137,123 +96,188 @@ class Tree:
         self.json_file_path = Path(self.tree_version_path, "tree.json")
 
     def load(self, vers=_VERSION_):
-        if self.json_file_path.exists():
-            json_dict = pob_file.read_json(self.json_file_path)
-            if json_dict is None:
-                ui_utils.critical_dialog(
-                    self.config.win,
-                    "f{self.config.app.tr('Load Tree')}: v{self.version}",
-                    "f{self.config.app.tr('An error occurred to trying load')}:\n{self.json_file_path}",
-                    self.config.app.tr("Close"),
-                )
-            else:
-                self._version = vers
-                self.min_x = json_dict["min_x"]
-                self.min_y = json_dict["min_y"]
-                self.max_x = json_dict["max_x"]
-                self.max_y = json_dict["max_y"]
-                self.total_points = json_dict["points"]["totalPoints"]
-                self.ascendancy_points = json_dict["points"]["ascendancyPoints"]
-                # and now split the file into dicts
-                self.assets = json_dict["assets"]
-                self.classes = json_dict["classes"]
-                self.groups = json_dict["groups"]
-                self.nodes = json_dict["nodes"]
-                self.skill_sprites = json_dict["skillSprites"]
-
-                if self._version >= 3.10:
-                    # Migrate groups to old format
-                    for g in self.groups:
-                        group = self.groups[g]
-                        group["n"] = group["nodes"]
-                        group["oo"] = {}
-                        for orbit in group["orbits"]:
-                            group["oo"][orbit] = True
-                    del self.nodes["root"]
-
-                for n in self.nodes:
-                    node = self.nodes[n]
-                    # if self._version < 3.10:
-                    #    Migrate nodes to new format
-                    #    node.classStartIndex = node.spc[0] and node.spc[0]
-                    # else:
-                    # To old format
-                    if self._version >= 3.10:
-                        node["dn"] = node["name"]
-                        node["id"] = node.pop("skill")
-                        node["sd"] = node.pop("stats")
-                        if "group" in node:
-                            node["g"] = node.pop("group")
-                        if "orbit" in node:
-                            node["o"] = node.pop("orbit")
-                        if "orbitIndex" in node:
-                            node["oidx"] = node.pop("orbitIndex")
-                        # if "passivePointsGranted" not in node:
-                        node["passivePointsGranted"] = node.get(
-                            "passivePointsGranted", 0
-                        )
-
-                    # Find the node's group
-                    try:
-                        """
-                        local group = self.groups[node.g]
-                        if group then
-                            node.group = group
-                            group.ascendancyName = node.ascendancyName
-                            if node.isAscendancyStart then
-                                group.isAscendancyStart = true
-                            end
-                        """
-                        if "g" in node:
-                            group_num = str(node["g"])
-                            group = self.groups.get(group_num, None)
-                            if self.groups is not None:
-                                node["group"] = group
-                                if "ascendancyName" in node:
-                                    group["ascendancyName"] = node["ascendancyName"]
-                                if "isAscendancyStart" in node:
-                                    group["isAscendancyStart"] = node[
-                                        "isAscendancyStart"
-                                    ]
-                                # else:
-                                #     node["isAscendancyStart"] = False
-                                #     group["isAscendancyStart"] = False
-                        # elseif node.type == "Notable" or node.type == "Keystone" then
-                        #    self.clusterNodeMap[node.dn] = node
-                    except KeyError:
-                        print("2. Node group error")
-
-                # remap assets' contents into internal resource ids
-                for n_id in self.assets:
-                    self.assets[n_id] = ":/Art/TreeData/" + n_id + ".png"
-
-                # -1 one as the dictionaries are 0 based indexes
-                num_zoom_levels = len(json_dict["imageZoomLevels"]) - 1
-
-                # remap skill_sprites' filename attribute to a valid runtime filename
-                for n_id in self.skill_sprites:
-                    # Now remove all but the last one, currently this will be [0-2], leaving [3]
-                    # num_zoom_levels is at 3 and -1 is because we want to keep the highest resolution.
-                    for idx in range(num_zoom_levels - 1, -1, -1):
-                        del self.skill_sprites[n_id][idx]
-
-                    # the one remaining file entry can now be indexed as 0
-                    filename = Path(
-                        re.sub("(\?.*)$", "", self.skill_sprites[n_id][0]["filename"])
-                    ).name
-                    self.skill_sprites[n_id][0]["filename"] = Path(
-                        self.tree_version_path, filename
-                    )
-
-            # if self.json_file_path.exists():
-        else:
+        print(f"Load: {vers}")
+        json_dict = pob_file.read_json(self.json_file_path)
+        if json_dict is None:
             ui_utils.critical_dialog(
                 self.config.win,
                 "f{self.config.app.tr('Load Tree')}: v{self.version}",
-                "{self.config.app.tr('This file doesn't exist')}:\n{self.json_file_path}",
+                "f{self.config.app.tr('An error occurred to trying load')}:\n{self.json_file_path}",
                 self.config.app.tr("Close"),
             )
+            return
+
+        self._version = vers
+        self.min_x = json_dict["min_x"]
+        self.min_y = json_dict["min_y"]
+        self.max_x = json_dict["max_x"]
+        self.max_y = json_dict["max_y"]
+        self.total_points = json_dict["points"]["totalPoints"]
+        self.ascendancy_points = json_dict["points"]["ascendancyPoints"]
+        # and now split the file into dicts
+        self.assets = json_dict["assets"]
+        self.classes = json_dict["classes"]
+        self.constants = json_dict["constants"]
+        self.groups = json_dict["groups"]
+        self.nodes = json_dict["nodes"]
+        self.skill_sprites = json_dict["skillSprites"]
+
+        self.spriteMap = {}
+        spriteSheets = {}
+
+        # Migrate groups to old format. To be evaluated if this is needed
+        for g in self.groups:
+            group = self.groups[g]
+            group["n"] = group["nodes"]
+            group["oo"] = {}
+            for orbit in group["orbits"]:
+                group["oo"][orbit] = True
+
+        class_name_map = {}
+        ascend_name_map = {}
+        class_notables = {}
+        class_id = 0
+        for _class in self.classes:
+            # print(_class)
+            class_name_map[_class.get("name")] = class_id
+            # print(_class.get("ascendancies", None))
+            _class.update({0: {"name": "None"}})
+            # _class.classes = {0: {"name": "None"}}
+            ascend_class_id = 0
+            for _ascend_class in _class.get("ascendancies", None):
+                ascend_name_map[_ascend_class.get("name")] = {
+                    "classId": class_id,
+                    "class": _class,
+                    "ascendClassId": ascend_class_id,
+                    "ascendClass": _ascend_class,
+                }
+                ascend_class_id += 1
+            class_id += 1
+
+        self.skillsPerOrbit = self.constants["skillsPerOrbit"]
+        self.orbitRadii = self.constants["orbitRadii"]
+        self.orbitAnglesByOrbit = {}
+        orbit = 0
+        for skillsInOrbit in self.skillsPerOrbit:
+            # self.orbitAnglesByOrbit[orbit] = self:CalcOrbitAngles(skillsInOrbit)
+            print(orbit)
+            print(skillsInOrbit)
+            orbit += 1
+
+    # Create a dictionary list of nodes or class Node
+        # make the root node go away
+        del self.nodes["root"]
+        for n in self.nodes:
+            node = Node(self.nodes[n])
+            self.nodes[n] = node
+
+            # Find the node's type
+            self.get_node_type(node, ascend_name_map, class_notables)
+
+            # Find the node's group
+            if node.group_id >= 0:
+                group = self.groups.get(node.group_id, None)
+                if group is not None:
+                    node.group = group
+                    group["ascendancyName"] = node.ascendancyName
+                    group["isAscendancyStart"] = node.isAscendancyStart
+            elif node.type == "Notable" or node.type == "Keystone":
+               self.clusterNodeMap[node.dn] = node
+
+            with open(f"temp/{node.id}.txt", "w") as fout:
+                # fout.write(pformat(vars(node)))
+                pprint(vars(node), fout)
+            # self.ProcessNode(node)
+
+        # remap assets' contents into internal resource ids
+        for n_id in self.assets:
+            self.assets[n_id] = ":/Art/TreeData/" + n_id + ".png"
+
+        # -1 one as the dictionaries are 0 based indexes
+        num_zoom_levels = len(json_dict["imageZoomLevels"]) - 1
+
+        # remap skill_sprites' filename attribute to a valid runtime filename
+        for n_id in self.skill_sprites:
+            # Now remove all but the last one, currently this will be [0-2], leaving [3]
+            # num_zoom_levels is at 3 and -1 is because we want to keep the highest resolution.
+            for idx in range(num_zoom_levels - 1, -1, -1):
+                del self.skill_sprites[n_id][idx]
+
+            # the one remaining file entry can now be indexed as 0
+            filename = Path(
+                re.sub("(\?.*)$", "", self.skill_sprites[n_id][0]["filename"])
+            ).name
+            self.skill_sprites[n_id][0]["filename"] = Path(
+                self.tree_version_path, filename
+            )
+
         # load
+
+    def get_node_type(self, node: Node, ascend_name_map, class_notables):
+        if node.classStartIndex:
+            node.startArt = f"center{PlayerClasses(node.classStartIndex).name.lower()}"
+            node.type = "ClassStart"
+            _class = self.classes[node.classStartIndex]
+            _class["startNodeId"] = node.id
+        elif node.isAscendancyStart:
+            node.type = "AscendClassStart"
+            ascend_name_map[node.ascendancyName]["ascendClass"]["startNodeId"] = node.id
+        elif node.isMastery:
+            node.type = "Mastery"
+            if node.masteryEffects:
+                for effect in node.masteryEffects:
+                    _id = str(effect["effect"])
+                    if not self.masteryEffects.get(_id, None):
+                        self.masteryEffects[_id] = {"id": _id, "sd": effect["stats"]}
+                        # self.ProcessStats(self.masteryEffects[_id])
+        elif node.isJewelSocket:
+            node.type = "Socket"
+            self.sockets[node.id] = node
+        elif node.isKeystone:
+            node.type = "Keystone"
+            self.keystoneMap[node.dn] = node
+            self.keystoneMap[node.dn.lower()] = node
+        elif node.isNotable:
+            node.type = "Notable"
+            if not node.ascendancyName:
+                # Some nodes have duplicate names in the tree data for some reason, even though they're not on the tree
+                # Only add them if they're actually part of a group (i.e. in the tree)
+                # Add everything otherwise, because cluster jewel notables don't have a group
+                if not self.notableMap.get(node.dn.lower(), None):
+                    self.notableMap[node.dn.lower()] = node
+                elif node.g >= 0:
+                    self.notableMap[node.dn.lower()] = node
+            else:
+                self.ascendancyMap[node.dn.lower()] = node
+                if not class_notables.get(
+                    ascend_name_map[node.ascendancyName]["class"]["name"], None
+                ):
+                    class_notables[
+                        ascend_name_map[node.ascendancyName]["class"]["name"]
+                    ] = {}
+                if ascend_name_map[node.ascendancyName]["class"]["name"] != "Scion":
+                    class_notables[
+                        ascend_name_map[node.ascendancyName]["class"]["name"]
+                    ] = node.dn
+        else:
+            node.type = "Normal"
+            if (
+                node.ascendancyName == "Ascendant"
+                and "Dexterity" not in node.dn
+                and "Intelligence" not in node.dn
+                and "Strength" not in node.dn
+                and "Passive" not in node.dn
+            ):
+                self.ascendancyMap[node.dn.lower()] = node
+                if not class_notables.get(
+                    ascend_name_map[node.ascendancyName]["class"]["name"], None
+                ):
+                    class_notables[
+                        ascend_name_map[node.ascendancyName]["class"]["name"]
+                    ] = {}
+                class_notables[
+                    ascend_name_map[node.ascendancyName]["class"]["name"]
+                ] = node.dn
 
 
 # def test(config: Config) -> None:

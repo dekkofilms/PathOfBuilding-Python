@@ -72,7 +72,7 @@ from qdarktheme.qtpy.QtWidgets import (
 )
 
 import pob_file, ui_utils
-from pob_config import Config, ColourCodes, PlayerClasses, player_class_backgrounds
+from pob_config import Config, ColourCodes, PlayerClasses, class_backgrounds
 from tree import Tree
 from tree_graphics_item import TreeGraphicsItem
 
@@ -84,10 +84,10 @@ class TreeView(QGraphicsView):
         self.tree = _tree
 
         self.ui = None
-        self._scene = QGraphicsScene()
-        self._scene = QGraphicsScene(
-            self, self.tree.min_x, self.tree.min_y, self.tree.max_x, self.tree.max_y
-        )
+        self._scene = QGraphicsScene(self.tree.size)
+        # self._scene = QGraphicsScene(
+        #     self, self.tree.min_x, self.tree.min_y, self.tree.max_x, self.tree.max_y
+        # )
 
         self._zoom = 0
         self.setScene(self._scene)
@@ -217,36 +217,10 @@ class TreeView(QGraphicsView):
             # Hack to draw class background art, the position data doesn't seem to be in the tree JSON yet
             image = None
             if self.tree.char_class != PlayerClasses.SCION:
-                c = player_class_backgrounds[self.tree.char_class]
+                c = class_backgrounds[self.tree.char_class]
                 self._char_class_bkgnd_image = self.add_picture(
                     self.tree.assets[c["n"]], c["x"], c["y"], -2, False
                 )
-            # if self.tree.char_class == PlayerClasses.MARAUDER:
-            #     image = self.add_picture(
-            #         self.tree.assets["BackgroundStr"], -2750, 1600, -2, False
-            #     )
-            # if self.tree.char_class == PlayerClasses.RANGER:
-            #     image = self.add_picture(
-            #         self.tree.assets["BackgroundDex"], 2550, 1600, -2, False
-            #     )
-            # if self.tree.char_class == PlayerClasses.WITCH:
-            #     image = self.add_picture(
-            #         self.tree.assets["BackgroundInt"], -250, -2200, -2, False
-            #     )
-            # if self.tree.char_class == PlayerClasses.DUELIST:
-            #     image = self.add_picture(
-            #         self.tree.assets["BackgroundStrDex"], -150, 2350, -2, False
-            #     )
-            # if self.tree.char_class == PlayerClasses.TEMPLAR:
-            #     image = self.add_picture(
-            #         self.tree.assets["BackgroundStrInt"], -2100, -1500, -2, False
-            #     )
-            # if self.tree.char_class == PlayerClasses.SHADOW:
-            #     image = self.add_picture(
-            #         self.tree.assets["BackgroundDexInt"], 2350, -1950, -2, False
-            #     )
-            # track which is the current image, maybe useful later for switching classes ?
-            # self._char_class_bkgnd_image = image
 
             """
                 -- Draw the group backgrounds

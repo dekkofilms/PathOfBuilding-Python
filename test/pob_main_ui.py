@@ -18,16 +18,16 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QTransform)
 from PySide6.QtWidgets import (QApplication, QComboBox, QFormLayout, QFrame,
     QGraphicsView, QHBoxLayout, QLabel, QMainWindow,
-    QMenu, QMenuBar, QSizePolicy, QSplitter,
-    QStatusBar, QTabWidget, QToolBar, QWidget)
+    QMenu, QMenuBar, QSizePolicy, QSpacerItem,
+    QSplitter, QStatusBar, QTabWidget, QTextEdit,
+    QToolBar, QWidget)
 import PoB_rc
-
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(800, 600)
+        MainWindow.resize(847, 635)
         MainWindow.setMinimumSize(QSize(800, 600))
         MainWindow.setWindowTitle(u"Path of Building")
         self.actionNew = QAction(MainWindow)
@@ -137,6 +137,21 @@ class Ui_MainWindow(object):
         self.bandit_comboBox.setModelColumn(0)
 
         self.formLayout.setWidget(0, QFormLayout.FieldRole, self.bandit_comboBox)
+
+        self.widget = QWidget(self.frame)
+        self.widget.setObjectName(u"widget")
+        self.widget.setGeometry(QRect(40, 110, 304, 194))
+        self.horizontalLayout_3 = QHBoxLayout(self.widget)
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.horizontalLayout_3.setContentsMargins(0, 0, 0, 0)
+        self.textEdit = QTextEdit(self.widget)
+        self.textEdit.setObjectName(u"textEdit")
+
+        self.horizontalLayout_3.addWidget(self.textEdit)
+
+        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+
+        self.horizontalLayout_3.addItem(self.horizontalSpacer)
 
         self.mainsplitter.addWidget(self.frame)
         self.tabWidget = QTabWidget(self.mainsplitter)

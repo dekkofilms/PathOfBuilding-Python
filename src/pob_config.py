@@ -122,7 +122,7 @@ class PlayerClasses(Enum):
     SHADOW = 6
 
 
-player_class_backgrounds = {
+class_backgrounds = {
     PlayerClasses.SCION: {"n": "", "x": 0, "y": 0},
     PlayerClasses.MARAUDER: {"n": "BackgroundStr", "x": -2750, "y": 1600},
     PlayerClasses.RANGER: {"n": "BackgroundDex", "x": 2550, "y": 1600},
@@ -130,6 +130,61 @@ player_class_backgrounds = {
     PlayerClasses.DUELIST: {"n": "BackgroundStrDex", "x": -150, "y": 2350},
     PlayerClasses.TEMPLAR: {"n": "BackgroundStrInt", "x": -2100, "y": -1500},
     PlayerClasses.SHADOW: {"n": "BackgroundDexInt", "x": 2350, "y": -1950},
+}
+
+class_centres = {
+    PlayerClasses.SCION: {"n": "centerscion", "x": 0, "y": 0},
+    PlayerClasses.MARAUDER: {"n": "centermarauder", "x": -2750, "y": 1600},
+    PlayerClasses.RANGER: {"n": "centerranger", "x": 2550, "y": 1600},
+    PlayerClasses.WITCH: {"n": "centerwitch", "x": -250, "y": -2200},
+    PlayerClasses.DUELIST: {"n": "centerduelist", "x": -150, "y": 2350},
+    PlayerClasses.TEMPLAR: {"n": "centertemplar", "x": -2100, "y": -1500},
+    PlayerClasses.SHADOW: {"n": "centershadow", "x": 2350, "y": -1950},
+}
+
+nodeOverlay = {
+    "Normal": {
+        "artWidth": "40",
+        "alloc": "PSSkillFrameActive",
+        "path": "PSSkillFrameHighlighted",
+        "unalloc": "PSSkillFrame",
+        "allocAscend": "AscendancyFrameSmallAllocated",
+        "pathAscend": "AscendancyFrameSmallCanAllocate",
+        "unallocAscend": "AscendancyFrameSmallNormal"
+    },
+    "Notable": {
+        "artWidth": "58",
+        "alloc": "NotableFrameAllocated",
+        "path": "NotableFrameCanAllocate",
+        "unalloc": "NotableFrameUnallocated",
+        "allocAscend": "AscendancyFrameLargeAllocated",
+        "pathAscend": "AscendancyFrameLargeCanAllocate",
+        "unallocAscend": "AscendancyFrameLargeNormal",
+        "allocBlighted": "BlightedNotableFrameAllocated",
+        "pathBlighted": "BlightedNotableFrameCanAllocate",
+        "unallocBlighted": "BlightedNotableFrameUnallocated",
+    },
+    "Keystone": {
+        "artWidth": "84",
+        "alloc": "KeystoneFrameAllocated",
+        "path": "KeystoneFrameCanAllocate",
+        "unalloc": "KeystoneFrameUnallocated"
+    },
+    "Socket": {
+        "artWidth": "58",
+        "alloc": "JewelFrameAllocated",
+        "path": "JewelFrameCanAllocate",
+        "unalloc": "JewelFrameUnallocated",
+        "allocAlt": "JewelSocketAltActive",
+        "pathAlt": "JewelSocketAltCanAllocate",
+        "unallocAlt": "JewelSocketAltNormal",
+    },
+    "Mastery": {
+        "artWidth": "65",
+        "alloc": "AscendancyFrameLargeAllocated",
+        "path": "AscendancyFrameLargeCanAllocate",
+        "unalloc": "AscendancyFrameLargeNormal"
+    },
 }
 
 
@@ -173,7 +228,7 @@ class Config:
             # try:
                 self.config = OrderedDict(pob_file.read_xml(self.settingsFile))
                 self.misc = self.config["PathOfBuilding"]["Misc"]
-                print(self.misc)
+                # print(self.misc)
             # except:
             #     self.config = None
         if self.config is None:

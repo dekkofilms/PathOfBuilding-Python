@@ -15,48 +15,57 @@ from pob_config import Config, ColourCodes, _VERSION_
 
 
 class Node:
-    def __init__(self, _config: Config, _node, _groups, _version: str = _VERSION_) -> None:
+    def __init__(self, _node, _version: str = _VERSION_) -> None:
         # declare variables that are set in functions
-        self.config = _config
         self.version = _version
 
         # calculated values
+        self.conquered = False
+        self.linkedId = {}
+        self.modKey = ""
+        self.modList = {}
+        self.mods = {}
+        self.overlay = {}
+        self.size = {}
+        self.sprites = {}
+        self.x = 0
+        self.y = 0
         self._type = None
+        self.startArt = None
+        self._reminderText = ""  # Do not use None
 
         # values from the passed in dictionary
-        self._dn = _node["name"]
-        self._id = _node.pop("skill")
-        self._sd = _node.pop("stats")
-        self.g = _node.get("group", None)
-        self.o = _node.get("orbit", None)
-        self.oidx = _node.get("orbitIndex", None)
+        self.name = _node.get("name", None)
+        self.dn = _node.get("name", None)
+        self._id = _node.get("skill", 0)
+        self.group_id = _node.get("group", -1)
+        self.g = _node.get("group", -1)
+        self.orbit = _node.get("orbit", 0)
+        self.o = _node.get("orbit", 0)
+        self.orbitIndex = _node.get("orbitIndex", 0)
+        self.oidx = _node.get("orbitIndex", 0)
         self.passivePointsGranted = _node.get("passivePointsGranted", 0)
-
-        # Find the node's type
-
-        # Find the node's group
-        try:
-            """
-            local group = self.groups[node.g]
-            if group then
-                node.group = group
-                group.ascendancyName = node.ascendancyName
-                if node.isAscendancyStart then
-                    group.isAscendancyStart = true
-                end
-            """
-            group_num = str(_node.get["g"], None)
-            if group_num is not None:
-                group = _groups.get(group_num, None)
-                if _groups is not None:
-                    _node["group"] = group
-                    group["ascendancyName"] = _node.get("ascendancyName", "")
-                    group["isAscendancyStart"] = _node.get("isAscendancyStart", False)
-                # this will need to be done at the tree level
-            # elseif node.type == "Notable" or node.type == "Keystone" then
-            #    self.clusterNodeMap[node.dn] = node
-        except KeyError:
-            print("2. Node group error")
+        self.stats = _node.get("stats", None)
+        self.sd = _node.get("stats", None)
+        self.reminderText = _node.get("reminderText", None)
+        self.ascendancyName = _node.get("ascendancyName", None)
+        self.icon = _node.get("icon", None)
+        self.nodes_in = _node.get("in", None)
+        self.nodes_out = _node.get("out", None)
+        self.recipe = _node.get("recipe", None)
+        self.classStartIndex = _node.get("classStartIndex", None)
+        self.isNotable = _node.get("isNotable", False)
+        self.isAscendancyStart = _node.get("isAscendancyStart", False)
+        self.isMastery = _node.get("isMastery", False)
+        self.inactiveIcon = _node.get("inactiveIcon", None)
+        self.activeIcon = _node.get("activeIcon", None)
+        self.activeEffectImage = _node.get("activeEffectImage", None)
+        self.masteryEffects = _node.get("masteryEffects", None)
+        self.isJewelSocket = _node.get("isJewelSocket", False)
+        self.expansionJewel = _node.get("expansionJewel", None)
+        self.isProxy = _node.get("isProxy", False)
+        self.isKeystone = _node.get("isKeystone", False)
+        self.flavourText = _node.get("flavourText", None)
 
     @property
     def id(self):
@@ -65,3 +74,24 @@ class Node:
     @id.setter
     def id(self, new_id):
         self._id = new_id
+
+    @property
+    def reminderText(self):
+        return self._reminderText
+
+    @reminderText.setter
+    def reminderText(self, new_text):
+        self._reminderText = ""
+        if new_text is None:
+            return
+        for line in new_text:
+            self._reminderText = f"{self._reminderText}{line}\n"
+        self._reminderText = self._reminderText.strip()
+
+    @property
+    def type(self):
+        return self._type
+
+    @type.setter
+    def type(self, new_type):
+        self._type = new_type

@@ -89,6 +89,7 @@ class RightPane:
         self.tree = {_VERSION_: Tree(self.config)}
         self.current_tree = self.tree[_VERSION_]
         self.tabTree = TreeView(self.config, self.current_tree)
+        self.current_tree = None
 
         # need the layout to make the label follow window size changes
         self.horizontalLayout_2 = QHBoxLayout(self.tabTree)

@@ -12,7 +12,7 @@ associated with a Player.
 
 from pathlib import Path
 
-from pob_config import Config, ColourCodes, program_title, PlayerClasses
+from pob_config import Config, ColourCodes, program_title, PlayerClasses, _VERSION_
 import pob_file
 import ui_utils
 from tree import Tree
@@ -61,11 +61,12 @@ class Build:
         # self.player = player.Player()
         self.filename = ""
         self.build = None
-        self.trees = {}
-        self.curr_tree = Tree(self.config)
+        # self.trees = {_VERSION_: Tree(self.config)}
+        # self.current_tree = self.tree[_VERSION_]
+        # self.curr_tree = Tree(self.config)
         self.ui = None
         self.need_saving = False
-        self._curr_class = PlayerClasses.SCION
+        self._current_class = PlayerClasses.SCION
 
     def __repr__(self) -> str:
         ret_str = f"[BUILD]: '{self.name}'\n"
@@ -83,17 +84,17 @@ class Build:
         self.config.win.setWindowTitle(f"{program_title} - {new_name}")
 
     @property
-    def curr_class(self):
-        return self._curr_class
+    def current_class(self):
+        return self._current_class
 
-    @curr_class.setter
+    @current_class.setter
     def curr_class(self, new_class):
         """
         Actions required for changing classes
         :param new_class: Integer representing the PlayerClasses enumerations
         :return:
         """
-        self._curr_class = new_class
+        self._current_class = new_class
 
     def new(self):
         self.build = default_build
@@ -120,7 +121,7 @@ class Build:
             _name = Path(Path(filename).name).stem
         self.name = _name
         # split out the trees in a dict of Assigned_Nodes classes
-        self.curr_class = self.curr_tree.char_class
+        self.curr_class = self.current_tree.char_class
 
     def save(self):
         """
