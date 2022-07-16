@@ -15,6 +15,7 @@ from pathlib import Path
 from qdarktheme.qtpy.QtCore import (
     QSize,
     QDir,
+    QPoint,
     QRect,
     QRectF,
     Qt,
@@ -102,7 +103,8 @@ class TreeView(QGraphicsView):
         self.add_tree_images()
         # self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.drag = False
-        self.startPos = None
+        self.start_pos = None
+        self.fitInView(True, 0.1)
 
     # Inherited, don't change definition
     def wheelEvent(self, event):
@@ -114,81 +116,88 @@ class TreeView(QGraphicsView):
             self._zoom -= 1
         if self._zoom != 0:
             self.scale(factor, factor)
-        # t = self.transform()
-        # print(t.m11())
+        t = self.transform()
+        print(t.m11())
         # print(t.m22())
         # print(self._zoom)
         event.accept()
 
     # Inherited, don't change definition
-    # def mousePressEvent(self, event) -> None:
-    #     """
-    #     Hack to allow a normal mouse pointer until the mouse is held down
-    #     This allows drag
-    #     :param event: Std param
-    #     :return: N/A
-    #     """
-    #     if event.button() != Qt.LeftButton:
-    #         event.ignore()
-    #         return
-    #     print("TreeView.mousePressEvent")
-    #     super(TreeView, self).mousePressEvent(event)
-    #     if self.itemAt(event.pos()) is None:
-    #         # self.setDragMode(QGraphicsView.ScrollHandDrag)
-    #         self.setCursor(Qt.ClosedHandCursor)
-    #         self.drag = True
-    #         self.startPos = event.pos()
+    def mousePressEvent(self, event) -> None:
+        """
+        Hack to allow a normal mouse pointer until the mouse is held down
+        This allows drag
+        :param event: Std param
+        :return: N/A
+        """
+        if event.button() != Qt.LeftButton:
+            event.ignore()
+            return
+        print("TreeView.mousePressEvent")
+        super(TreeView, self).mousePressEvent(event)
+        if self.itemAt(event.pos()) is None:
+            # self.setDragMode(QGraphicsView.ScrollHandDrag)
+            self.setCursor(Qt.ClosedHandCursor)
+            self.drag = True
+            self.start_pos = event.pos()
 
     # Inherited, don't change definition
-    # def mouseMoveEvent(self, event) -> None:
-    #     # Not super reliable at high zoom in's
-    #     if self.startPos is not None:
-    #         # print("TreeView.mouseMoveEvent")
-    #         delta = self.startPos - event.pos()
-    #         transform = self.transform()
-    #         x = delta.x() / transform.m11()
-    #         y = delta.y() / transform.m22()
-    #         if x >= 0:
-    #             x = max(x, 30)
-    #         else:
-    #             x = min(y, -30)
-    #         if y >= 0:
-    #             y = max(y, 30)
-    #         else:
-    #             y = min(y, -30)
-    #         # print(f"self.startPos: {self.startPos}, delta: {delta}, x: {x}, y: {y}, m11: {transform.m11()}, m22: {transform.m22()}")
-    #         # print(f"x: {self.sceneRect()}, y: {self.sceneRect().translated(x, y)}")
-    #         self.setSceneRect(self.sceneRect().translated(x, y))
-    #         # self.update()
-    #         self.startPos = event.pos()
-    #         # self.setCursor(Qt.OpenHandCursor)
-    #     else:
-    #         super(TreeView, self).mouseMoveEvent(event)
+    def mouseMoveEvent(self, event) -> None:
+        """
+        Drag the scene (aka pan)
+        limit the amount it moves to stop zoom "creep" (speeding up of zoom the longer it happens)
+        :param event:
+        :return:
+        """
+        if self.start_pos is not None:
+            delta = self.start_pos - event.pos()
+            rect = self.scene().sceneRect()
+            # x = delta.x()
+            # y = delta.y()
+            # # print(f"a: {delta}, {x}, {y}")
+            # # limit the amount it moves.
+            # # !!!! This might need adjusting to account for zoom
+            # if x >= 0:
+            #     x = min(x, 30)
+            # else:
+            #     x = max(x, -30)
+            # if y >= 0:
+            #     y = min(y, 30)
+            # else:
+            #     y = max(y, -30)
+            # delta = QPoint(x, y)
+            # print(f"b: {delta}, {x}, {y}")
+
+            rect.setTopLeft(rect.topLeft() + delta)
+            rect.setBottomRight(rect.bottomRight() + delta)
+            self.scene().setSceneRect(rect)
+        else:
+            super(TreeView, self).mouseMoveEvent(event)
 
     # Inherited, don't change definition
-    # def mouseReleaseEvent(self, event) -> None:
-    #     """
-    #     Hack to allow a normal mouse pointer until the mouse is held down
-    #     This releases drag
-    #     :param event: Std param
-    #     :return: N/A
-    #     """
-    #     print("TreeView.mouseReleaseEvent")
-    #     if self.itemAt(event.pos()) is None:
-    #         # self.setDragMode(QGraphicsView.NoDrag)
-    #         self.setCursor(Qt.ArrowCursor)
-    #         self.drag = False
-    #         self.startPos = None
-    #     super(TreeView, self).mouseReleaseEvent(event)
+    def mouseReleaseEvent(self, event) -> None:
+        """
+        Hack to allow a normal mouse pointer until the mouse is held down
+        This releases drag
+        :param event: Std param
+        :return: N/A
+        """
+        print("TreeView.mouseReleaseEvent")
+        if self.itemAt(event.pos()) is None:
+            # self.setDragMode(QGraphicsView.NoDrag)
+            self.setCursor(Qt.ArrowCursor)
+            self.drag = False
+            self.start_pos = None
+        super(TreeView, self).mouseReleaseEvent(event)
 
     def fitInView(self, scale=True, factor=None):
-            # self.setSceneRect(rect)
-            unity = self.transform().mapRect(QRectF(0, 0, 1, 1))
-            if factor is None:
-                self.scale(1 / unity.width(), 1 / unity.height())
-            else:
-                self.scale(factor, factor)
-            self._zoom = 0
+        # self.setSceneRect(rect)
+        unity = self.transform().mapRect(QRectF(0, 0, 1, 1))
+        if factor is None:
+            self.scale(1 / unity.width(), 1 / unity.height())
+        else:
+            self.scale(factor, factor)
+        self._zoom = 0
 
     def add_picture(self, pixmap, x, y, z=0, selectable=True):
         # if pixmap and not pixmap.isNull():
