@@ -90,7 +90,6 @@ class TreeView(QGraphicsView):
         #     self, self.tree.min_x, self.tree.min_y, self.tree.max_x, self.tree.max_y
         # )
 
-        self._zoom = 0
         self.setScene(self._scene)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
@@ -108,18 +107,16 @@ class TreeView(QGraphicsView):
 
     # Inherited, don't change definition
     def wheelEvent(self, event):
+        """
+        Zoom in and out. Attempt to limit zoom
+        :param event:
+        :return:
+        """
         if event.angleDelta().y() > 0:
             factor = 1.25
-            self._zoom += 1
         else:
             factor = 0.8
-            self._zoom -= 1
-        if self._zoom != 0:
-            self.scale(factor, factor)
-        t = self.transform()
-        print(t.m11())
-        # print(t.m22())
-        # print(self._zoom)
+        self.fitInView(True, factor)
         event.accept()
 
     # Inherited, don't change definition
@@ -152,22 +149,23 @@ class TreeView(QGraphicsView):
         if self.start_pos is not None:
             delta = self.start_pos - event.pos()
             rect = self.scene().sceneRect()
-            # x = delta.x()
-            # y = delta.y()
-            # # print(f"a: {delta}, {x}, {y}")
+            x = delta.x()
+            y = delta.y()
+            # print(f"a: {delta}, {x}, {y}")
             # # limit the amount it moves.
-            # # !!!! This might need adjusting to account for zoom
-            # if x >= 0:
-            #     x = min(x, 30)
-            # else:
-            #     x = max(x, -30)
-            # if y >= 0:
-            #     y = min(y, 30)
-            # else:
-            #     y = max(y, -30)
-            # delta = QPoint(x, y)
+            # !!!! This might need adjusting to account for zoom (0.08 = out, 0.5 = in)
+            if x >= 0:
+                x = min(x, 20)
+            else:
+                x = max(x, -20)
+            if y >= 0:
+                y = min(y, 20)
+            else:
+                y = max(y, -20)
+            delta = QPoint(x, y)
             # print(f"b: {delta}, {x}, {y}")
 
+            # adjust the viewing rectangle
             rect.setTopLeft(rect.topLeft() + delta)
             rect.setBottomRight(rect.bottomRight() + delta)
             self.scene().setSceneRect(rect)
@@ -197,7 +195,6 @@ class TreeView(QGraphicsView):
             self.scale(1 / unity.width(), 1 / unity.height())
         else:
             self.scale(factor, factor)
-        self._zoom = 0
 
     def add_picture(self, pixmap, x, y, z=0, selectable=True):
         # if pixmap and not pixmap.isNull():

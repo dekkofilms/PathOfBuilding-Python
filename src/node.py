@@ -33,6 +33,8 @@ class Node:
         self._type = None
         self.startArt = None
         self._reminderText = ""  # Do not use None
+        self.masterySprites = {}
+        self.group = {}
 
         # values from the passed in dictionary
         self.name = _node.get("name", None)

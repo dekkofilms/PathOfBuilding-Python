@@ -100,7 +100,7 @@ class RightPane:
         self.tabTree.setFocusPolicy(Qt.TabFocus)
         # self.tabTree.add_picture("c:/git/PathOfBuilding-Python/src/TreeData/3_18/mastery-3.png", 10, 10, 1)
         # self.tabTree.add_picture(u":/Art/TreeData/ClassesRaider.png", -1000, -1000)
-        self.tabTree.add_picture(":/Art/TreeData/ClassesRaider.png", -10, -10)
+        # self.tabTree.add_picture(":/Art/TreeData/ClassesRaider.png", -10, -10)
         # self.tabTree.fitInView(self.current_tree.size)
         # self.tabTree.fitInView(False, 0.5)
 

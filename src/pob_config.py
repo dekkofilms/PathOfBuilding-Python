@@ -2,9 +2,9 @@
 Configuration Class
 
 Defines reading and writing the settings xml as well as the settings therein
-The variables that from thelua verion of Path of Building retain their current
+The variables that come from the lua version of Path of Building retain their current naming
 
-As the settings.xml can be altered by humans,care must be taken toensure data integrity, where possible
+As the settings.xml can be altered by humans, care must be taken to ensure data integrity, where possible
 
 This is a base PoB class. It doesn't import any other PoB ui classes
 Imports pob_file
@@ -186,6 +186,14 @@ nodeOverlay = {
         "unalloc": "AscendancyFrameLargeNormal"
     },
 }
+for _type in nodeOverlay:
+    """
+    From PassiveTree.lua file. Setting as the same scope as the 'constant'
+    """
+    data = nodeOverlay[_type]
+    size = int(data["artWidth"]) * 1.33
+    data["size"] = size
+    data["rsq"] = size * size
 
 
 class PlayerAscendancies(Enum):

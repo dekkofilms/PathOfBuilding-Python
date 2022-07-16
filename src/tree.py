@@ -13,18 +13,39 @@ This holds in memory a copy of the tree data and doesn't know about any actively
 
 It is referenced by the TreeView class to display the tree
 """
-import os, re, json
+import re, math
 from pprint import pprint
-from plucky import pluck, plucks, pluckable, merge
 from pathlib import Path
 from qdarktheme.qtpy.QtCore import QRect
 
 import pob_file, ui_utils
-from pob_config import Config, ColourCodes, PlayerClasses, _VERSION_, class_centres
+from pob_config import Config, ColourCodes, PlayerClasses, _VERSION_, nodeOverlay
 from tree_graphics_item import TreeGraphicsItem
 from node import Node
 
 # from Build import Build
+
+
+def calc_orbit_angles(nodes_in_orbit):
+    orbit_angles = {}
+    if nodes_in_orbit == 16:
+        # Every 30 and 45 degrees, per https://github.com/grindinggear/skilltree-export/blob/3.17.0/README.md
+        orbit_angles = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330]
+    elif nodes_in_orbit == 40:
+        # Every 10 and 45 degrees
+        orbit_angles = [0, 10, 20, 30, 40, 45, 50, 60, 70, 80, 90, 100, 110, 120, 130, 135, 140, 150, 160, 170, 180,
+                       190, 200, 210, 220, 225, 230, 240, 250, 260, 270, 280, 290, 300, 310, 315, 320, 330, 340,
+                       350]
+    else:
+        # Uniformly spaced
+        for i in range(nodes_in_orbit):
+            orbit_angles[i] = 360 * i / nodes_in_orbit
+
+    for i in range(len(orbit_angles)):
+        orbit_angles[i] = math.radians(orbit_angles[i])
+
+    return orbit_angles
+    # calc_orbit_angles
 
 
 class Tree:
@@ -41,7 +62,6 @@ class Tree:
         self.classes = {}
         self.groups = {}
         self.nodes = {}
-        self.skill_sprites = {}
         self.min_x = 0
         self.min_y = 0
         self.max_x = 0
@@ -52,14 +72,17 @@ class Tree:
         self.ascendancy_points = 8
         self.skillsPerOrbit = {}
         self.orbitRadii = {}
-        self.orbitAnglesByOrbit = {}
+        self.orbit_anglesByOrbit = {}
 
         self.ascendancyMap = {}
         self.clusterNodeMap = {}
+        self.constants = {}
         self.keystoneMap = {}
         self.masteryEffects = {}
         self.notableMap = {}
         self.sockets = {}
+        # Should this be a dict of GraphicItems
+        self.spriteMap = {}
 
         self.load()
 
@@ -73,6 +96,7 @@ class Tree:
         image.setPos(x, y)
         image.setZValue(z)
         self.graphics_items.append(image)
+        return image
 
     @property
     def char_class(self):
@@ -94,9 +118,15 @@ class Tree:
             self.config.tree_data_path, re.sub("\.", "_", str(new_vers))
         )
         self.json_file_path = Path(self.tree_version_path, "tree.json")
+        self.legion_path = Path(self.config.tree_data_path, "legion")
 
     def load(self, vers=_VERSION_):
-        print(f"Load: {vers}")
+        """
+        Load the tree json of a given version and process it
+        :param vers: The version of the tree to load
+        :return:
+        """
+        print(f"Loading Tree: {vers}")
         json_dict = pob_file.read_json(self.json_file_path)
         if json_dict is None:
             ui_utils.critical_dialog(
@@ -120,29 +150,27 @@ class Tree:
         self.constants = json_dict["constants"]
         self.groups = json_dict["groups"]
         self.nodes = json_dict["nodes"]
-        self.skill_sprites = json_dict["skillSprites"]
+        # this information is moved into self.spriteMap
+        skill_sprites = json_dict["skillSprites"]
 
-        self.spriteMap = {}
-        spriteSheets = {}
+        # -1 one as the dictionaries are 0 based indexes
+        num_zoom_levels = len(json_dict["imageZoomLevels"]) - 1
 
-        # Migrate groups to old format. To be evaluated if this is needed
-        for g in self.groups:
-            group = self.groups[g]
-            group["n"] = group["nodes"]
-            group["oo"] = {}
-            for orbit in group["orbits"]:
-                group["oo"][orbit] = True
+        self.skillsPerOrbit = self.constants["skillsPerOrbit"]
+        self.orbitRadii = self.constants["orbitRadii"]
+        self.orbit_anglesByOrbit = {}
+        orbit = 0
+        for skillsInOrbit in self.skillsPerOrbit:
+            self.orbit_anglesByOrbit[orbit] = calc_orbit_angles(skillsInOrbit)
+            orbit += 1
 
         class_name_map = {}
         ascend_name_map = {}
         class_notables = {}
         class_id = 0
         for _class in self.classes:
-            # print(_class)
             class_name_map[_class.get("name")] = class_id
-            # print(_class.get("ascendancies", None))
             _class.update({0: {"name": "None"}})
-            # _class.classes = {0: {"name": "None"}}
             ascend_class_id = 0
             for _ascend_class in _class.get("ascendancies", None):
                 ascend_name_map[_ascend_class.get("name")] = {
@@ -154,17 +182,40 @@ class Tree:
                 ascend_class_id += 1
             class_id += 1
 
-        self.skillsPerOrbit = self.constants["skillsPerOrbit"]
-        self.orbitRadii = self.constants["orbitRadii"]
-        self.orbitAnglesByOrbit = {}
-        orbit = 0
-        for skillsInOrbit in self.skillsPerOrbit:
-            # self.orbitAnglesByOrbit[orbit] = self:CalcOrbitAngles(skillsInOrbit)
-            print(orbit)
-            print(skillsInOrbit)
-            orbit += 1
+        # remap assets' contents into internal resource ids
+        for n_id in self.assets:
+            self.assets[n_id] = ":/Art/TreeData/" + n_id + ".png"
 
-    # Create a dictionary list of nodes or class Node
+        # sprite_sheets variable is a way of tracking what we've downloaded.
+        # might have thought the presence of the file would have done that.
+        sprite_sheets = {}
+        self.process_sprite_map(
+            skill_sprites, sprite_sheets, self.tree_version_path, num_zoom_levels
+        )
+
+        # Now do the legion sprite import
+        legion_sprites = pob_file.read_json(Path(self.legion_path, "tree-legion.json"))
+        if legion_sprites is None:
+            ui_utils.critical_dialog(
+                self.config.win,
+                "f{self.config.app.tr('Load File')}",
+                "f{self.config.app.tr('An error occurred to trying load')}:\n{self.legion_file_path}",
+                self.config.app.tr("Close"),
+            )
+        else:
+            self.process_sprite_map(
+                legion_sprites["legionSprites"], sprite_sheets, self.legion_path, 0
+            )
+
+        # Migrate groups to old format. To be evaluated if this is needed
+        for g in self.groups:
+            group = self.groups[g]
+            group["n"] = group["nodes"]
+            group["oo"] = {}
+            for orbit in group["orbits"]:
+                group["oo"][orbit] = True
+
+        # Create a dictionary list of nodes or class Node
         # make the root node go away
         del self.nodes["root"]
         for n in self.nodes:
@@ -176,44 +227,64 @@ class Tree:
 
             # Find the node's group
             if node.group_id >= 0:
-                group = self.groups.get(node.group_id, None)
+                group = self.groups.get(str(node.group_id), None)
                 if group is not None:
                     node.group = group
                     group["ascendancyName"] = node.ascendancyName
                     group["isAscendancyStart"] = node.isAscendancyStart
             elif node.type == "Notable" or node.type == "Keystone":
-               self.clusterNodeMap[node.dn] = node
+                self.clusterNodeMap[node.dn] = node
+
+            # Finally the node will get an x,y value. now we can show it.
+            self.process_node(node)
 
             with open(f"temp/{node.id}.txt", "w") as fout:
-                # fout.write(pformat(vars(node)))
-                pprint(vars(node), fout)
-            # self.ProcessNode(node)
-
-        # remap assets' contents into internal resource ids
-        for n_id in self.assets:
-            self.assets[n_id] = ":/Art/TreeData/" + n_id + ".png"
-
-        # -1 one as the dictionaries are 0 based indexes
-        num_zoom_levels = len(json_dict["imageZoomLevels"]) - 1
-
-        # remap skill_sprites' filename attribute to a valid runtime filename
-        for n_id in self.skill_sprites:
-            # Now remove all but the last one, currently this will be [0-2], leaving [3]
-            # num_zoom_levels is at 3 and -1 is because we want to keep the highest resolution.
-            for idx in range(num_zoom_levels - 1, -1, -1):
-                del self.skill_sprites[n_id][idx]
-
-            # the one remaining file entry can now be indexed as 0
-            filename = Path(
-                re.sub("(\?.*)$", "", self.skill_sprites[n_id][0]["filename"])
-            ).name
-            self.skill_sprites[n_id][0]["filename"] = Path(
-                self.tree_version_path, filename
-            )
+                # pprint(vars(node), fout)
+                pprint(dict((name, getattr(node, name)) for name in dir(node) if not name.startswith('__')), fout)
 
         # load
 
+    def process_node(self, node: Node):
+        # Assign node artwork assets
+        if node.type == "Mastery" and node.masteryEffects:
+            node.masterySprites = {
+                "activeIcon": self.spriteMap[node.activeIcon],
+                "inactiveIcon": self.spriteMap[node.inactiveIcon],
+                "activeEffectImage": self.spriteMap[node.activeEffectImage],
+            }
+        else:
+            node.sprites = self.spriteMap[node.icon]
+        if not node.sprites:
+            # error("missing sprite "..node.icon)
+            node.sprites = self.spriteMap["Art/2DArt/SkillIcons/passives/MasteryBlank.png"]
+        node.overlay = nodeOverlay.get(node.type, None)
+        if node.overlay:
+            node.rsq = node.overlay["rsq"]
+            node.size = node.overlay["size"]
+
+        # Derive the true position of the node
+        if node.group:
+            # print(f"node.o: {node.o}")
+            # print(f"node.oidx: {node.oidx}")
+            # !!!! Alert: Review these plus one's if things don't look good !!!!
+            # node.angle = self.orbit_anglesByOrbit[node.o + 1][node.oidx + 1]
+            # orbit_radius = self.orbitRadii[node.o + 1]
+            node.angle = self.orbit_anglesByOrbit[node.o][node.oidx]
+            orbit_radius = self.orbitRadii[node.o]
+            node.x = node.group["x"] + math.sin(node.angle) * orbit_radius
+            node.y = node.group["y"] - math.cos(node.angle) * orbit_radius
+            print(f"node.x,y: {node.id}: {node.x},{node.y}")
+
+    # process_node
+
     def get_node_type(self, node: Node, ascend_name_map, class_notables):
+        """
+        Decide and assign a type value to a node
+        :param node: The target node
+        :param ascend_name_map: Dictionary for the Ascendancies
+        :param class_notables: Dictionary for the Class Notables
+        :return:
+        """
         if node.classStartIndex:
             node.startArt = f"center{PlayerClasses(node.classStartIndex).name.lower()}"
             node.type = "ClassStart"
@@ -278,7 +349,44 @@ class Tree:
                 class_notables[
                     ascend_name_map[node.ascendancyName]["class"]["name"]
                 ] = node.dn
+    # get_node_type
 
+    def process_sprite_map(self, sprite_list, sprite_map, sprite_path, index):
+        """
+        Process a sprite map list for loading the image (downloading it too later)
+          and updating self.spriteMap (should these be a list of graphic items (using setOffset) ?
+        :param sprite_list: Incoming Dictionary from a json file
+        :param sprite_map: Dictionary to stop duplicate loading of a GraphicItem, to be shared between instantiations
+        :param sprite_path: The path where the images are stored
+        :param index: A number describing which set of values to use
+        :return: N/A
+        """
+        for _type in sprite_list:
+            data = sprite_list[_type][index]
+            # remap skill_sprites' filename attribute to a valid runtime filename
+            filename = Path(re.sub("(\?.*)$", "", data["filename"])).name
+            filename = Path(sprite_path, filename)
+            data["filename"] = filename
+            sheet = sprite_map.get(filename, None)
+            if sheet is None:
+                # As this is a sprite sheet, x,y can be 0 as it won't be seen on screen as itself.
+                sheet = self.add_picture(filename, 0, 0, 1)
+                sprite_map[filename] = sheet
+            for name in data["coords"]:
+                if self.spriteMap.get(name, None) is None:
+                    self.spriteMap[name] = {}
+                coord = data["coords"][name]
+                # Should this be a dict of GraphicItems
+                self.spriteMap[name][_type] = {
+                    "handle": sheet,
+                    "width": coord["w"],
+                    "height": coord["h"],
+                    "1": coord["x"] / sheet.width,
+                    "2": coord["y"] / sheet.height,
+                    "3": (coord["x"] + coord["w"]) / sheet.width,
+                    "4": (coord["y"] + coord["h"]) / sheet.height,
+                }
+    # process_sprite_map
 
 # def test(config: Config) -> None:
 #     tree = Tree(config)

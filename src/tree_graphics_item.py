@@ -108,6 +108,11 @@ class TreeGraphicsItem(QGraphicsPixmapItem):
         super(TreeGraphicsItem, self).__init__()
         self.config = _config
         self.setPixmap(QPixmap(_image_name))
+        self.width = self.pixmap().size().width()
+        self.height = self.pixmap().size().height()
+        # print(_image_name)
+        # print(self.width)
+        # print(self.height)
         self.setZValue(z_value)
         self.filename = _image_name
         self.data = _image_name
